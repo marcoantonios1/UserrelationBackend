@@ -2,17 +2,102 @@ package controller
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"userrelation/database"
 	"userrelation/model"
 
 	"github.com/gin-gonic/gin"
+	"github.com/neo4j/neo4j-go-driver/neo4j"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var UsersCollection *mongo.Collection = database.UsersData(database.Users, "Users")
+
+func CheckUsersRelationship() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, _ := c.Get("id")
+		userToFollowID := c.Query("user_id")
+
+		// Create a new driver for Neo4j
+		driver, err := neo4j.NewDriver("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer driver.Close()
+
+		// Create a new session
+		session, err := driver.NewSession(neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		if err != nil {
+			log.Print(err)
+		}
+		defer session.Close()
+
+		// Run the query to check if the user is following the other user
+		result, err := session.Run(
+			"MATCH (a:User)-[r]->(b:User) WHERE a.id = $userID AND b.id = $userToFollowID RETURN type(r)",
+			map[string]interface{}{
+				"userID":         userID,
+				"userToFollowID": userToFollowID,
+			},
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Check the relationship between the users
+		if result.Next() {
+			relationship := result.Record().GetByIndex(0)
+			log.Print(relationship)
+			c.JSON(http.StatusOK, relationship)
+		} else {
+			log.Print("There is no relationship")
+			c.JSON(http.StatusOK, "")
+		}
+	}
+}
+
+func CheckRestaurantRelationship() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, _ := c.Get("id")
+		restaurantToFollowID := c.Query("resto_id")
+
+		// Create a new driver for Neo4j
+		driver, err := neo4j.NewDriver("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer driver.Close()
+
+		// Create a new session
+		session, err := driver.NewSession(neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		if err != nil {
+			log.Print(err)
+		}
+		defer session.Close()
+
+		// Run the query to check if the user is following the other user
+		result, err := session.Run(
+			"MATCH (a:User)-[:FOLLOWS]->(b:Restaurant ) WHERE a.id = $userID AND b.id = $restaurantToFollowID RETURN b",
+			map[string]interface{}{
+				"userID":               userID,
+				"restaurantToFollowID": restaurantToFollowID,
+			},
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Check if the user is following the other user
+		if result.Next() {
+			c.JSON(http.StatusOK, "following")
+		} else {
+			c.JSON(http.StatusOK, "")
+		}
+	}
+}
 
 func Follow() gin.HandlerFunc {
 	return func(c *gin.Context) {
