@@ -8,7 +8,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func KafkaFollow(ctx context.Context, userId string, userToFollowID string) {
+func KafkaFollow(ctx context.Context, followerId string, userToFollowID string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{"localhost:9092"},
@@ -20,9 +20,9 @@ func KafkaFollow(ctx context.Context, userId string, userToFollowID string) {
 
 	// Prepare and send the message
 	message := map[string]interface{}{
-		"userId":      userId,
-		"follow_user": userToFollowID,
-		"following":   true,
+		"followerId": followerId,
+		"followeeId": userToFollowID,
+		"following":  true,
 	}
 
 	messageJSON, err := json.Marshal(message)
@@ -32,7 +32,7 @@ func KafkaFollow(ctx context.Context, userId string, userToFollowID string) {
 	}
 
 	msg := kafka.Message{
-		Key:   []byte(userId),
+		Key:   []byte(followerId),
 		Value: messageJSON,
 	}
 
@@ -43,7 +43,7 @@ func KafkaFollow(ctx context.Context, userId string, userToFollowID string) {
 	}
 }
 
-func KafkaUnFollow(ctx context.Context, userId string, userToFollowID string) {
+func KafkaUnFollow(ctx context.Context, followerId string, userToFollowID string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{"localhost:9092"},
@@ -55,8 +55,8 @@ func KafkaUnFollow(ctx context.Context, userId string, userToFollowID string) {
 
 	// Prepare and send the message
 	message := map[string]interface{}{
-		"userId":      userId,
-		"follow_user": userToFollowID,
+		"followerId":  followerId,
+		"followeeId":  userToFollowID,
 		"unfollowing": true,
 	}
 
@@ -67,7 +67,7 @@ func KafkaUnFollow(ctx context.Context, userId string, userToFollowID string) {
 	}
 
 	msg := kafka.Message{
-		Key:   []byte(userId),
+		Key:   []byte(followerId),
 		Value: messageJSON,
 	}
 
@@ -78,7 +78,7 @@ func KafkaUnFollow(ctx context.Context, userId string, userToFollowID string) {
 	}
 }
 
-func KafkaFollowRequest(ctx context.Context, userId string, userToFollowID string) {
+func KafkaFollowRequest(ctx context.Context, followerId string, userToFollowID string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{"localhost:9092"},
@@ -90,8 +90,8 @@ func KafkaFollowRequest(ctx context.Context, userId string, userToFollowID strin
 
 	// Prepare and send the message
 	message := map[string]interface{}{
-		"userId":        userId,
-		"follow_user":   userToFollowID,
+		"followerId":    followerId,
+		"followeeId":    userToFollowID,
 		"followRequest": true,
 	}
 
@@ -102,7 +102,7 @@ func KafkaFollowRequest(ctx context.Context, userId string, userToFollowID strin
 	}
 
 	msg := kafka.Message{
-		Key:   []byte(userId),
+		Key:   []byte(followerId),
 		Value: messageJSON,
 	}
 
@@ -113,7 +113,7 @@ func KafkaFollowRequest(ctx context.Context, userId string, userToFollowID strin
 	}
 }
 
-func KafkaAcceptFollowRequest(ctx context.Context, userId string, userToFollowID string) {
+func KafkaAcceptFollowRequest(ctx context.Context, followerId string, userToFollowID string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{"localhost:9092"},
@@ -125,9 +125,9 @@ func KafkaAcceptFollowRequest(ctx context.Context, userId string, userToFollowID
 
 	// Prepare and send the message
 	message := map[string]interface{}{
-		"userId":      userId,
-		"follow_user": userToFollowID,
-		"accept":      true,
+		"followerId": followerId,
+		"followeeId": userToFollowID,
+		"accept":     true,
 	}
 
 	messageJSON, err := json.Marshal(message)
@@ -137,7 +137,7 @@ func KafkaAcceptFollowRequest(ctx context.Context, userId string, userToFollowID
 	}
 
 	msg := kafka.Message{
-		Key:   []byte(userId),
+		Key:   []byte(followerId),
 		Value: messageJSON,
 	}
 
@@ -148,7 +148,7 @@ func KafkaAcceptFollowRequest(ctx context.Context, userId string, userToFollowID
 	}
 }
 
-func KafkaDeclineFollowRequest(ctx context.Context, userId string, userToFollowID string) {
+func KafkaDeclineFollowRequest(ctx context.Context, followerId string, userToFollowID string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{"localhost:9092"},
@@ -160,9 +160,9 @@ func KafkaDeclineFollowRequest(ctx context.Context, userId string, userToFollowI
 
 	// Prepare and send the message
 	message := map[string]interface{}{
-		"userId":      userId,
-		"follow_user": userToFollowID,
-		"decline":     true,
+		"followerId": followerId,
+		"followeeId": userToFollowID,
+		"decline":    true,
 	}
 
 	messageJSON, err := json.Marshal(message)
@@ -172,7 +172,7 @@ func KafkaDeclineFollowRequest(ctx context.Context, userId string, userToFollowI
 	}
 
 	msg := kafka.Message{
-		Key:   []byte(userId),
+		Key:   []byte(followerId),
 		Value: messageJSON,
 	}
 
@@ -185,7 +185,7 @@ func KafkaDeclineFollowRequest(ctx context.Context, userId string, userToFollowI
 
 ///////////////RESTAURANTS////////////////////
 
-func KafkaFollowRestaurant(ctx context.Context, userId string, userToFollowID string) {
+func KafkaFollowRestaurant(ctx context.Context, followerId string, userToFollowID string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{"localhost:9092"},
@@ -197,8 +197,8 @@ func KafkaFollowRestaurant(ctx context.Context, userId string, userToFollowID st
 
 	// Prepare and send the message
 	message := map[string]interface{}{
-		"userId":              userId,
-		"follow_user":         userToFollowID,
+		"followerId":          followerId,
+		"followeeId":          userToFollowID,
 		"followingRestaurant": true,
 	}
 
@@ -209,7 +209,7 @@ func KafkaFollowRestaurant(ctx context.Context, userId string, userToFollowID st
 	}
 
 	msg := kafka.Message{
-		Key:   []byte(userId),
+		Key:   []byte(followerId),
 		Value: messageJSON,
 	}
 
@@ -220,7 +220,7 @@ func KafkaFollowRestaurant(ctx context.Context, userId string, userToFollowID st
 	}
 }
 
-func KafkaUnFollowRestaurant(ctx context.Context, userId string, userToFollowID string) {
+func KafkaUnFollowRestaurant(ctx context.Context, followerId string, userToFollowID string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{"localhost:9092"},
@@ -232,8 +232,8 @@ func KafkaUnFollowRestaurant(ctx context.Context, userId string, userToFollowID 
 
 	// Prepare and send the message
 	message := map[string]interface{}{
-		"userId":                userId,
-		"follow_user":           userToFollowID,
+		"followerId":            followerId,
+		"followeeId":            userToFollowID,
 		"unfollowingRestaurant": true,
 	}
 
@@ -244,7 +244,7 @@ func KafkaUnFollowRestaurant(ctx context.Context, userId string, userToFollowID 
 	}
 
 	msg := kafka.Message{
-		Key:   []byte(userId),
+		Key:   []byte(followerId),
 		Value: messageJSON,
 	}
 
