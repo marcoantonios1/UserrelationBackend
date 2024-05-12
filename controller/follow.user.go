@@ -22,6 +22,9 @@ func CheckUsersRelationship() gin.HandlerFunc {
 		userID, _ := c.Get("id")
 		userToFollowID := c.Query("user_id")
 
+		// Convert userID to string
+		userIDObj := userID.(primitive.ObjectID)
+
 		// Create a new driver for Neo4j
 		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
 		if err != nil {
@@ -38,7 +41,7 @@ func CheckUsersRelationship() gin.HandlerFunc {
 			func(tx neo4j.ManagedTransaction) (any, error) {
 				result, err := tx.Run(context.Background(), "MATCH (a:User)-[r]->(b:User) WHERE a.id = $userID AND b.id = $userToFollowID RETURN type(r)",
 					map[string]interface{}{
-						"userID":         userID,
+						"userID":         userIDObj.Hex(),
 						"userToFollowID": userToFollowID,
 					})
 				if err != nil {
@@ -105,7 +108,7 @@ func CheckRestaurantRelationship() gin.HandlerFunc {
 		// Run the query to check if the user is following the other user
 		result, err := session.ExecuteRead(context.Background(),
 			func(tx neo4j.ManagedTransaction) (any, error) {
-				result, err := tx.Run(context.Background(), "MATCH (a:User)-[:FOLLOWS]->(b:Restaurant ) WHERE a.id = $userID AND b.id = $restaurantToFollowID RETURN b",
+				result, err := tx.Run(context.Background(), "MATCH (a:User)-[r]->(b:Restaurant ) WHERE a.id = $userID AND b.id = $restaurantToFollowID RETURN type(r)",
 					map[string]interface{}{
 						"userID":               ueserIdObj.Hex(),
 						"restaurantToFollowID": restaurantToFollowID,

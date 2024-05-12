@@ -23,13 +23,9 @@ func UnFollowRestaurant() gin.HandlerFunc {
 			return
 		}
 
-		userIDObj, ok := userID.(primitive.ObjectID)
-		if !ok {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-			return
-		}
+		userIDObj := userID.(primitive.ObjectID)
 
-		userToUnFollowID := c.Query("user_id")
+		userToUnFollowID := c.Query("resto_id")
 		userToUnFollowIDObj, err := primitive.ObjectIDFromHex(userToUnFollowID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID to unfollow"})
@@ -68,13 +64,9 @@ func FollowRestaurant() gin.HandlerFunc {
 			return
 		}
 
-		userIDObj, ok := userID.(primitive.ObjectID)
-		if !ok {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-			return
-		}
+		userIDObj := userID.(primitive.ObjectID)
 
-		userToFollowID := c.Query("user_id")
+		userToFollowID := c.Query("resto_id")
 		userToFollowIDObj, err := primitive.ObjectIDFromHex(userToFollowID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID to follow"})
