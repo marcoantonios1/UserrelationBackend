@@ -15,8 +15,12 @@ func Routes(incomingRoutes *gin.Engine) {
 		userRoutes.GET("/users/viewing/restaurants/users-restaurant-relation", controller.CheckRestaurantRelationship())
 		userRoutes.GET("/users/viewing/restaurants/total-users-restaurant-relation", controller.CountRestaurantFollowers())
 		userRoutes.GET("/user/follow/user/follow-user-user-relation", controller.Follow())
-		userRoutes.GET("/user/follow/request/user/follow-user-request-user-relation", controller.Follow())
 		userRoutes.GET("/user/unfollow/user/unfollow-user-user-relation", controller.UnFollow())
+		userRoutes.GET("/user/follow/request/user/follow-user-request-user-relation", controller.FollowRequest())
+		userRoutes.GET("/user/follow/request/accept/user/follow-user-request-user-relation", controller.AcceptRequest())
+		userRoutes.GET("/user/follow/request/decline/user/follow-user-request-user-relation", controller.DeclineRequest())
+		userRoutes.GET("/user/follow/restaurant/follow-user-restaurant-relation", controller.FollowRestaurant())
+		userRoutes.GET("/user/unfollow/restaurant/unfollow-user-restaurant-relation", controller.UnFollowRestaurant())
 
 	}
 	incomingRoutes.NoRoute(func(c *gin.Context) {
