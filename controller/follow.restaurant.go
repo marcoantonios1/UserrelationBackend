@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"userrelation/database"
+	"userrelation/helper"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -54,6 +55,7 @@ func UnFollowRestaurant() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, "Unfollowed")
+		go helper.KafkaUnFollowRestaurant(ctx, userIDObj.Hex(), userToUnFollowID)
 	}
 }
 
@@ -98,5 +100,6 @@ func FollowRestaurant() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, "Followed")
+		go helper.KafkaFollowRestaurant(ctx, userIDObj.Hex(), userToFollowID)
 	}
 }
