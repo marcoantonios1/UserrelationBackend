@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var RestaurantCollection *mongo.Collection = database.UsersData(database.Restaurants, "Restaurants")
+var RestaurantCollection *mongo.Collection = database.RestaurantsData(database.Restaurants, "Restaurants")
 
 func UnFollowRestaurant() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -50,7 +50,7 @@ func UnFollowRestaurant() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, "Unfollowed")
+		c.JSON(http.StatusOK, "FOLLOW")
 		go helper.KafkaUnFollowRestaurant(ctx, userIDObj.Hex(), userToUnFollowID)
 	}
 }
@@ -91,7 +91,7 @@ func FollowRestaurant() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, "Followed")
+		c.JSON(http.StatusOK, "FOLLOWING")
 		go helper.KafkaFollowRestaurant(ctx, userIDObj.Hex(), userToFollowID)
 	}
 }
