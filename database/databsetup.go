@@ -17,7 +17,7 @@ func DBSet() *mongo.Client {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	MongoDb := os.Getenv("MONGODB_URL_RESTAURANTS")
+	MongoDb := os.Getenv("MONGODB_URL_USER")
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(MongoDb))
 
 	if err != nil {
@@ -40,7 +40,14 @@ func DBSet() *mongo.Client {
 
 var Users *mongo.Client = DBSet()
 
-func UsersData(restaurants *mongo.Client, collectionName string) *mongo.Collection {
-	var collection *mongo.Collection = restaurants.Database("User").Collection(collectionName)
+func UsersData(users *mongo.Client, collectionName string) *mongo.Collection {
+	var collection *mongo.Collection = users.Database("User").Collection(collectionName)
+	return collection
+}
+
+var Restaurants *mongo.Client = DBSet()
+
+func RestaurantsData(restaurants *mongo.Client, collectionName string) *mongo.Collection {
+	var collection *mongo.Collection = restaurants.Database("Restaurants").Collection(collectionName)
 	return collection
 }

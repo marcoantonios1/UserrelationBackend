@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"userrelation/route"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/cors"
@@ -25,7 +26,7 @@ func main() {
 	})
 	handler := c.Handler(router)
 
-	//route.Routes(router)
+	route.Routes(router)
 
 	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
