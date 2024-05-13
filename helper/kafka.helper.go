@@ -183,6 +183,41 @@ func KafkaDeclineFollowRequest(ctx context.Context, followerId string, userToFol
 	}
 }
 
+func KafkaCancelFollowRequest(ctx context.Context, followerId string, userToFollowID string) {
+	// Kafka configuration
+	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
+		Brokers:  []string{"localhost:9092"},
+		Topic:    "user_relation",
+		Balancer: &kafka.LeastBytes{},
+	})
+
+	defer kafkaWriter.Close()
+
+	// Prepare and send the message
+	message := map[string]interface{}{
+		"followerId":          followerId,
+		"followeeId":          userToFollowID,
+		"deleteFollowRequest": true,
+	}
+
+	messageJSON, err := json.Marshal(message)
+	if err != nil {
+		log.Println("Error marshaling Kafka message:", err)
+		return
+	}
+
+	msg := kafka.Message{
+		Key:   []byte(followerId),
+		Value: messageJSON,
+	}
+
+	err = kafkaWriter.WriteMessages(ctx, msg)
+	if err != nil {
+		// Handle Kafka sending error (log or return an error)
+		log.Println("Error sending message to Kafka:", err)
+	}
+}
+
 ///////////////RESTAURANTS////////////////////
 
 func KafkaFollowRestaurant(ctx context.Context, followerId string, userToFollowID string) {

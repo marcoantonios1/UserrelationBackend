@@ -423,3 +423,41 @@ func DeclineRequest() gin.HandlerFunc {
 		go helper.KafkaDeclineFollowRequest(ctx, userIDObj.Hex(), userToFollowID)
 	}
 }
+
+func CancelRequest() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get user ID from context
+		userID, exists := c.Get("id")
+		if !exists {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "User ID not found in context"})
+			return
+		}
+
+		userIDObj, ok := userID.(primitive.ObjectID)
+		if !ok {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
+
+		userToFollowID := c.Query("user_id")
+		userToFollowIDObj, err := primitive.ObjectIDFromHex(userToFollowID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID to follow"})
+			return
+		}
+
+		ctx := context.Background() // Consider using request-scoped context
+
+		// Increment the 'followers' count of the user being followed
+		update := bson.M{"$inc": bson.M{"follow_requests": -1}}
+		_, err = UsersCollection.UpdateOne(ctx, bson.M{"_id": userToFollowIDObj}, update)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user to follow"})
+			return
+		}
+
+		c.JSON(http.StatusOK, "Followed")
+
+		go helper.KafkaCancelFollowRequest(ctx, userIDObj.Hex(), userToFollowID)
+	}
+}
