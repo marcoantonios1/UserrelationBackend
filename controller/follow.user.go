@@ -254,7 +254,7 @@ func Follow() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, "Followed")
+		c.JSON(http.StatusOK, "FOLLOWING")
 		go helper.KafkaFollow(ctx, userIDObj.Hex(), userToFollowID)
 	}
 }
@@ -299,7 +299,7 @@ func UnFollow() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, "Unfollowed")
+		c.JSON(http.StatusOK, "FOLLOW")
 		go helper.KafkaUnFollow(ctx, userIDObj.Hex(), userToUnFollowID)
 	}
 }
@@ -336,7 +336,7 @@ func FollowRequest() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, "Requested")
+		c.JSON(http.StatusOK, "REQUESTED")
 		go helper.KafkaFollowRequest(ctx, userIDObj.Hex(), userToFollowID)
 	}
 }
@@ -381,7 +381,7 @@ func AcceptRequest() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, "Followed")
+		c.JSON(http.StatusOK, "FOLLOWING")
 		go helper.KafkaAcceptFollowRequest(ctx, userIDObj.Hex(), userToFollowID)
 	}
 }
@@ -402,23 +402,23 @@ func DeclineRequest() gin.HandlerFunc {
 		}
 
 		userToFollowID := c.Query("user_id")
-		userToFollowIDObj, err := primitive.ObjectIDFromHex(userToFollowID)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID to follow"})
-			return
-		}
+		// userToFollowIDObj, err := primitive.ObjectIDFromHex(userToFollowID)
+		// if err != nil {
+		// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID to follow"})
+		// 	return
+		// }
 
 		ctx := context.Background() // Consider using request-scoped context
 
 		// Increment the 'followers' count of the user being followed
 		update := bson.M{"$inc": bson.M{"follow_requests": -1}}
-		_, err = UsersCollection.UpdateOne(ctx, bson.M{"_id": userToFollowIDObj}, update)
+		_, err := UsersCollection.UpdateOne(ctx, bson.M{"_id": userIDObj}, update)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user to follow"})
 			return
 		}
 
-		c.JSON(http.StatusOK, "Followed")
+		c.JSON(http.StatusOK, "FOLLOW")
 
 		go helper.KafkaDeclineFollowRequest(ctx, userIDObj.Hex(), userToFollowID)
 	}
@@ -456,7 +456,7 @@ func CancelRequest() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, "Followed")
+		c.JSON(http.StatusOK, "FOLLOW")
 
 		go helper.KafkaCancelFollowRequest(ctx, userIDObj.Hex(), userToFollowID)
 	}
