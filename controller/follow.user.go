@@ -228,7 +228,7 @@ func DeclineRequest() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, "FOLLOW")
 
-		go helper.KafkaDeclineFollowRequest(ctx, userIDObj.Hex(), userToFollowID)
+		go helper.KafkaDeclineFollowRequest(ctx, userToFollowID, userIDObj.Hex())
 	}
 }
 
