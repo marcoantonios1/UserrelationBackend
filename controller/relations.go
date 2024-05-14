@@ -81,6 +81,76 @@ func CheckUsersRelationship() gin.HandlerFunc {
 	}
 }
 
+func CheckSearchedUsersRelationship() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, _ := c.Get("id")
+		userToFollowID := c.Query("user_id")
+
+		// Convert userID to string
+		userIDObj := userID.(primitive.ObjectID)
+
+		// Create a new driver for Neo4j
+		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer driver.Close(context.Background())
+
+		// Create a new session
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		defer session.Close(context.Background())
+
+		// Run the query to check for relationship
+		result, err := session.ExecuteRead(context.Background(),
+			func(tx neo4j.ManagedTransaction) (any, error) {
+				result, err := tx.Run(context.Background(), "MATCH (a:User)-[r]->(b:User) WHERE a.id = $userID AND b.id = $userToFollowID RETURN type(r)",
+					map[string]interface{}{
+						"userID":         userToFollowID,
+						"userToFollowID": userIDObj.Hex(),
+					})
+				if err != nil {
+					return nil, err // Handle error here (e.g., return specific error)
+				}
+
+				records, err := result.Collect(context.Background())
+				if err != nil {
+					return nil, err // Handle error here
+				}
+
+				// Check if any records exist (meaning a relationship exists)
+				if len(records) == 0 {
+					return "FOLLOW", nil // Indicate no relationship found
+				}
+
+				// Extract the relationship type from the first record
+				value, ok := records[0].Get("type(r)")
+				if !ok {
+					// Handle case where key "type(r)" doesn't exist (log or return error)
+					log.Println("Error: Key 'type(r)' not found in record")
+					return nil, errors.New("unexpected record structure") // Replace with appropriate error
+				}
+
+				relationshipType := value.(string)
+				return relationshipType, nil
+			})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Respond based on the result
+		relation, ok := result.(string)
+		if !ok {
+			// Handle unexpected result type (log or return error)
+			log.Printf("Unexpected result type: %T", result)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"result": relation,
+		})
+	}
+}
+
 func CheckRestaurantRelationship() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, _ := c.Get("id")
