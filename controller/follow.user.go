@@ -217,7 +217,7 @@ func AcceptRequest() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, "FOLLOWING")
-		go helper.KafkaAcceptFollowRequest(ctx, userIDObj.Hex(), userToFollowID)
+		go helper.KafkaAcceptFollowRequest(ctx, userToFollowID, userIDObj.Hex())
 	}
 }
 
