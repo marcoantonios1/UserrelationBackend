@@ -18,6 +18,7 @@ type User struct {
 	Biography      *string            `json:"bio" bson:"bio"`
 	Followers      uint32             `json:"followers" bson:"followers"`
 	Following      uint32             `json:"following" bson:"following"`
+	Follow_Request uint32             `json:"follow_requests" bson:"follow_requests"`
 	Status         bool               `json:"status" bson:"status"`
 	Private        bool               `json:"private" bson:"private"`
 	Token          *string            `json:"access_token" bson:"-"`
