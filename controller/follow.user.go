@@ -181,6 +181,14 @@ func AcceptRequest() gin.HandlerFunc {
 			return
 		}
 
+		// Increment the 'followers' count of the user being followed
+		update = bson.M{"$inc": bson.M{"follow_requests": -1}}
+		_, err = UsersCollection.UpdateOne(ctx, bson.M{"_id": userIDObj}, update)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user to follow"})
+			return
+		}
+
 		c.JSON(http.StatusOK, "FOLLOWING")
 		go helper.KafkaAcceptFollowRequest(ctx, userIDObj.Hex(), userToFollowID)
 	}
