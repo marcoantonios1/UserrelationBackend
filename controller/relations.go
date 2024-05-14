@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"userrelation/model"
 
 	"github.com/gin-gonic/gin"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
@@ -220,10 +221,19 @@ func CheckRestaurantRelationship() gin.HandlerFunc {
 	}
 }
 
-func CountRestaurantFollowers() gin.HandlerFunc {
+func RequestFollow() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		restaurantID := c.Query("resto_id")
+		userID, exists := c.Get("id")
+		if !exists {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "User ID not found in context"})
+			return
+		}
 
+		userIDObj, ok := userID.(primitive.ObjectID)
+		if !ok {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
 		// Create a new driver for Neo4j
 		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
 		if err != nil {
@@ -235,35 +245,44 @@ func CountRestaurantFollowers() gin.HandlerFunc {
 		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
 		defer session.Close(context.Background())
 
-		// Run the query to check if the user is following the other user
+		// Run the query to find users with REQUESTED relationship
 		result, err := session.ExecuteRead(context.Background(),
-			func(tx neo4j.ManagedTransaction) (any, error) {
-				result, err := tx.Run(context.Background(), "MATCH (u:User)-[:FOLLOWS]->(r:Restaurant) WHERE r.id = $restaurantID RETURN count(u) AS followerCount",
+			func(tx neo4j.ManagedTransaction) (interface{}, error) {
+				result, err := tx.Run(context.Background(), `
+                    MATCH (u:User)-[:REQUESTED]->(r:User {id: $userId})
+                    RETURN u { .id, .UserName, .Name, .Image, .Biography, .Followers, .Following, .Private } AS user
+                `,
 					map[string]interface{}{
-						"restaurantID": restaurantID,
+						"userId": userIDObj.Hex(),
 					},
 				)
 				if err != nil {
 					return nil, err
 				}
 
-				// Check for no followers
-				if !result.NextRecord(context.Background(), nil) {
-					return 0, nil // Return 0 if no followers found
+				var users []model.Neo4jUser
+				for result.NextRecord(context.Background(), nil) {
+					userNode, ok := result.Record().Get("user")
+					if !ok {
+						return nil, errors.New("failed to get user node")
+					}
+					userMap := userNode.(map[string]interface{})
+
+					user := model.Neo4jUser{
+						ID:        userMap["id"].(string),
+						UserName:  userMap["UserName"].(*string),
+						Name:      userMap["Name"].(*string),
+						Image:     userMap["Image"].(*string),
+						Biography: userMap["Biography"].(*string),
+						Followers: uint32(userMap["Followers"].(int64)),
+						Following: uint32(userMap["Following"].(int64)),
+						Private:   userMap["Private"].(bool),
+					}
+
+					users = append(users, user)
 				}
 
-				// Get the follower count
-				value, ok := result.Record().Get("followerCount")
-				if !ok {
-					return nil, errors.New("failed to get follower count")
-				}
-
-				followerCount, ok := value.(int64)
-				if !ok {
-					return nil, errors.New("unexpected type for follower count")
-				}
-
-				return followerCount, nil
+				return users, nil
 			},
 		)
 
@@ -273,7 +292,7 @@ func CountRestaurantFollowers() gin.HandlerFunc {
 			return
 		}
 
-		// Return the follower count
-		c.JSON(http.StatusOK, gin.H{"result": result.(int64)})
+		// Return the list of users with matching structure
+		c.JSON(http.StatusOK, gin.H{"result": result})
 	}
 }
