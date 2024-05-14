@@ -22,6 +22,7 @@ func Routes(incomingRoutes *gin.Engine) {
 		userRoutes.GET("/user/follow/request/decline/user/follow-user-request-user-relation", controller.DeclineRequest())
 		userRoutes.GET("/user/follow/restaurant/follow-user-restaurant-relation", controller.FollowRestaurant())
 		userRoutes.GET("/user/unfollow/restaurant/unfollow-user-restaurant-relation", controller.UnFollowRestaurant())
+		userRoutes.GET("/users/viewing/users/total-users-user-request", controller.GetTotalFollowRequest())
 		//userRoutes.GET("/user/search/user/get/user/info", controller.GetOtherUserAndRelationship())
 
 	}

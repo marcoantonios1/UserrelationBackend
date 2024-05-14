@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"userrelation/database"
 	"userrelation/helper"
+	"userrelation/model"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -13,6 +14,32 @@ import (
 )
 
 var UsersCollection *mongo.Collection = database.UsersData(database.Users, "Users")
+
+func GetTotalFollowRequest() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get user ID from context
+		userID, exists := c.Get("id")
+		if !exists {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "User ID not found in context"})
+			return
+		}
+
+		userIDObj := userID.(primitive.ObjectID)
+
+		ctx := context.Background() // Consider using request-scoped context
+
+		// Find the user
+		var user model.User
+		err := UsersCollection.FindOne(ctx, bson.M{"_id": userIDObj}).Decode(&user)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find user"})
+			return
+		}
+
+		// Return the Follow_Request field of the user
+		c.JSON(http.StatusOK, user.Follow_Request)
+	}
+}
 
 func Follow() gin.HandlerFunc {
 	return func(c *gin.Context) {
