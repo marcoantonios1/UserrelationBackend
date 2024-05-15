@@ -30,13 +30,13 @@ type User struct {
 }
 
 type Neo4jUser struct {
-	ID        string  `json:"id"`
-	UserName  *string `json:"username" validate:"required,min=4,max=30"`
-	Name      *string `json:"name"`
-	Image     *string `json:"image"`
-	Biography *string `json:"bio"`
-	Followers uint32  `json:"followers"`
-	Following uint32  `json:"following"`
-	Private   bool    `json:"private"`
-	Relation  string  `json:"relation"`
+	ID        string `json:"_id"`
+	UserName  string `json:"username" validate:"required,min=4,max=30"`
+	Name      string `json:"name"`
+	Image     string `json:"image"`
+	Biography string `json:"bio"`
+	Followers uint32 `json:"followers"`
+	Following uint32 `json:"following"`
+	Private   bool   `json:"private"`
+	Relation  string `json:"relation"`
 }
