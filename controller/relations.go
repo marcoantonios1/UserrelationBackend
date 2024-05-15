@@ -280,13 +280,17 @@ func RequestFollow() gin.HandlerFunc {
 					if !ok {
 						bio = "" // or any default value
 					}
+					private, ok := userMap["private"].(bool)
+					if !ok {
+						private = false // or any default value
+					}
 					user := model.Neo4jUser{
 						ID:        userMap["id"].(string),
 						UserName:  userMap["username"].(string),
 						Name:      name,
 						Image:     image,
 						Biography: bio,
-						Private:   userMap["private"].(bool),
+						Private:   private,
 					}
 
 					users = append(users, user)
