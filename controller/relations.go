@@ -268,12 +268,24 @@ func RequestFollow() gin.HandlerFunc {
 					}
 					userMap := userNode.(map[string]interface{})
 
+					image, ok := userMap["image"].(string)
+					if !ok {
+						image = "" // or any default value
+					}
+					name, ok := userMap["name"].(string)
+					if !ok {
+						name = "" // or any default value
+					}
+					bio, ok := userMap["bio"].(string)
+					if !ok {
+						bio = "" // or any default value
+					}
 					user := model.Neo4jUser{
 						ID:        userMap["id"].(string),
 						UserName:  userMap["username"].(string),
-						Name:      userMap["name"].(string),
-						Image:     userMap["image"].(string),
-						Biography: userMap["bio"].(string),
+						Name:      name,
+						Image:     image,
+						Biography: bio,
 						Private:   userMap["private"].(bool),
 					}
 
@@ -287,6 +299,11 @@ func RequestFollow() gin.HandlerFunc {
 		if err != nil {
 			log.Print(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if len(result.([]model.Neo4jUser)) == 0 {
+			c.JSON(http.StatusOK, []model.Neo4jUser{})
 			return
 		}
 
