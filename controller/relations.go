@@ -250,7 +250,7 @@ func RequestFollow() gin.HandlerFunc {
 			func(tx neo4j.ManagedTransaction) (interface{}, error) {
 				result, err := tx.Run(context.Background(), `
                     MATCH (u:User)-[:REQUESTED]->(r:User {id: $userId})
-                    RETURN u { .id, .UserName, .Name, .Image, .Biography, .Followers, .Following, .Private } AS user
+                    RETURN u { .id, .username, .name, .image, .bio, .private } AS user
                 `,
 					map[string]interface{}{
 						"userId": userIDObj.Hex(),
@@ -270,13 +270,11 @@ func RequestFollow() gin.HandlerFunc {
 
 					user := model.Neo4jUser{
 						ID:        userMap["id"].(string),
-						UserName:  userMap["UserName"].(*string),
-						Name:      userMap["Name"].(*string),
-						Image:     userMap["Image"].(*string),
-						Biography: userMap["Biography"].(*string),
-						Followers: uint32(userMap["Followers"].(int64)),
-						Following: uint32(userMap["Following"].(int64)),
-						Private:   userMap["Private"].(bool),
+						UserName:  userMap["username"].(string),
+						Name:      userMap["name"].(string),
+						Image:     userMap["image"].(string),
+						Biography: userMap["bio"].(string),
+						Private:   userMap["private"].(bool),
 					}
 
 					users = append(users, user)
@@ -293,6 +291,6 @@ func RequestFollow() gin.HandlerFunc {
 		}
 
 		// Return the list of users with matching structure
-		c.JSON(http.StatusOK, gin.H{"result": result})
+		c.JSON(http.StatusOK, result)
 	}
 }
