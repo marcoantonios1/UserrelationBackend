@@ -315,3 +315,193 @@ func RequestFollow() gin.HandlerFunc {
 		c.JSON(http.StatusOK, result)
 	}
 }
+
+func ViewFollowers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, exists := c.Get("id")
+		if !exists {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "User ID not found in context"})
+			return
+		}
+
+		userIDObj, ok := userID.(primitive.ObjectID)
+		if !ok {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
+		// Create a new driver for Neo4j
+		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer driver.Close(context.Background())
+
+		// Create a new session
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		defer session.Close(context.Background())
+
+		// Run the query to find users with REQUESTED relationship
+		result, err := session.ExecuteRead(context.Background(),
+			func(tx neo4j.ManagedTransaction) (interface{}, error) {
+				result, err := tx.Run(context.Background(), `
+                    MATCH (r:User {id: $userId})-[:FOLLOWING]->(u:User)
+                    RETURN u { .id, .username, .name, .image, .bio, .private } AS user
+                `,
+					map[string]interface{}{
+						"userId": userIDObj.Hex(),
+					},
+				)
+				if err != nil {
+					return nil, err
+				}
+
+				var users []model.Neo4jUser
+				for result.NextRecord(context.Background(), nil) {
+					userNode, ok := result.Record().Get("user")
+					if !ok {
+						return nil, errors.New("failed to get user node")
+					}
+					userMap := userNode.(map[string]interface{})
+
+					image, ok := userMap["image"].(string)
+					if !ok {
+						image = "" // or any default value
+					}
+					name, ok := userMap["name"].(string)
+					if !ok {
+						name = "" // or any default value
+					}
+					bio, ok := userMap["bio"].(string)
+					if !ok {
+						bio = "" // or any default value
+					}
+					private, ok := userMap["private"].(bool)
+					if !ok {
+						private = false // or any default value
+					}
+					user := model.Neo4jUser{
+						ID:        userMap["id"].(string),
+						UserName:  userMap["username"].(string),
+						Name:      name,
+						Image:     image,
+						Biography: bio,
+						Private:   private,
+					}
+
+					users = append(users, user)
+				}
+
+				return users, nil
+			},
+		)
+
+		if err != nil {
+			log.Print(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if len(result.([]model.Neo4jUser)) == 0 {
+			c.JSON(http.StatusOK, []model.Neo4jUser{})
+			return
+		}
+
+		// Return the list of users with matching structure
+		c.JSON(http.StatusOK, result)
+	}
+}
+
+func ViewFollowing() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, exists := c.Get("id")
+		if !exists {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "User ID not found in context"})
+			return
+		}
+
+		userIDObj, ok := userID.(primitive.ObjectID)
+		if !ok {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
+		// Create a new driver for Neo4j
+		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer driver.Close(context.Background())
+
+		// Create a new session
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		defer session.Close(context.Background())
+
+		// Run the query to find users with REQUESTED relationship
+		result, err := session.ExecuteRead(context.Background(),
+			func(tx neo4j.ManagedTransaction) (interface{}, error) {
+				result, err := tx.Run(context.Background(), `
+                    MATCH (u:User)-[:FOLLOWING]->(r:User {id: $userId})
+                    RETURN u { .id, .username, .name, .image, .bio, .private } AS user
+                `,
+					map[string]interface{}{
+						"userId": userIDObj.Hex(),
+					},
+				)
+				if err != nil {
+					return nil, err
+				}
+
+				var users []model.Neo4jUser
+				for result.NextRecord(context.Background(), nil) {
+					userNode, ok := result.Record().Get("user")
+					if !ok {
+						return nil, errors.New("failed to get user node")
+					}
+					userMap := userNode.(map[string]interface{})
+
+					image, ok := userMap["image"].(string)
+					if !ok {
+						image = "" // or any default value
+					}
+					name, ok := userMap["name"].(string)
+					if !ok {
+						name = "" // or any default value
+					}
+					bio, ok := userMap["bio"].(string)
+					if !ok {
+						bio = "" // or any default value
+					}
+					private, ok := userMap["private"].(bool)
+					if !ok {
+						private = false // or any default value
+					}
+					user := model.Neo4jUser{
+						ID:        userMap["id"].(string),
+						UserName:  userMap["username"].(string),
+						Name:      name,
+						Image:     image,
+						Biography: bio,
+						Private:   private,
+					}
+
+					users = append(users, user)
+				}
+
+				return users, nil
+			},
+		)
+
+		if err != nil {
+			log.Print(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if len(result.([]model.Neo4jUser)) == 0 {
+			c.JSON(http.StatusOK, []model.Neo4jUser{})
+			return
+		}
+
+		// Return the list of users with matching structure
+		c.JSON(http.StatusOK, result)
+	}
+}
