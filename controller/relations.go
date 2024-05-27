@@ -316,18 +316,22 @@ func RequestFollow() gin.HandlerFunc {
 	}
 }
 
-func ViewFollowers() gin.HandlerFunc {
+func ViewFollowing() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		usersearchID := c.Query("id")
 		userID, exists := c.Get("id")
 		if !exists {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "User ID not found in context"})
 			return
 		}
 
-		userIDObj, ok := userID.(primitive.ObjectID)
-		if !ok {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-			return
+		if usersearchID == "" {
+			userIDObj, ok := userID.(primitive.ObjectID)
+			if !ok {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+				return
+			}
+			usersearchID = userIDObj.Hex()
 		}
 		// Create a new driver for Neo4j
 		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
@@ -348,7 +352,7 @@ func ViewFollowers() gin.HandlerFunc {
                     RETURN u { .id, .username, .name, .image, .bio, .private } AS user
                 `,
 					map[string]interface{}{
-						"userId": userIDObj.Hex(),
+						"userId": usersearchID,
 					},
 				)
 				if err != nil {
@@ -411,18 +415,22 @@ func ViewFollowers() gin.HandlerFunc {
 	}
 }
 
-func ViewFollowing() gin.HandlerFunc {
+func ViewFollowers() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		usersearchID := c.Query("id")
 		userID, exists := c.Get("id")
 		if !exists {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "User ID not found in context"})
 			return
 		}
 
-		userIDObj, ok := userID.(primitive.ObjectID)
-		if !ok {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-			return
+		if usersearchID == "" {
+			userIDObj, ok := userID.(primitive.ObjectID)
+			if !ok {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+				return
+			}
+			usersearchID = userIDObj.Hex()
 		}
 		// Create a new driver for Neo4j
 		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
@@ -443,7 +451,7 @@ func ViewFollowing() gin.HandlerFunc {
                     RETURN u { .id, .username, .name, .image, .bio, .private } AS user
                 `,
 					map[string]interface{}{
-						"userId": userIDObj.Hex(),
+						"userId": usersearchID,
 					},
 				)
 				if err != nil {
@@ -505,3 +513,78 @@ func ViewFollowing() gin.HandlerFunc {
 		c.JSON(http.StatusOK, result)
 	}
 }
+
+func getMutualFollowers(userID1, userID2 string) ([]string, error) {
+	driver, err := neo4j.NewDriver("neo4j://localhost:7687", neo4j.BasicAuth("username", "password", ""))
+	if err != nil {
+		return nil, err
+	}
+	defer driver.Close()
+
+	session := driver.NewSession(neo4j.SessionConfig{})
+	defer session.Close()
+
+	query := `
+        MATCH (u1:User {id: $userID1})<-[:FOLLOWING]-(m:User)-[:FOLLOWING]->(u2:User {id: $userID2})
+        RETURN m.id as mutualFollowerID
+    `
+	params := map[string]interface{}{
+		"userID1": userID1,
+		"userID2": userID2,
+	}
+
+	result, err := session.Run(query, params)
+	if err != nil {
+		return nil, err
+	}
+
+	var mutualFollowers []string
+	for result.Next() {
+		record := result.Record()
+		mutualFollowerID, _ := record.Get("mutualFollowerID")
+		mutualFollowers = append(mutualFollowers, mutualFollowerID.(string))
+	}
+
+	if err = result.Err(); err != nil {
+		return nil, err
+	}
+
+	return mutualFollowers, nil
+}
+
+// func getMutualFollowersCount(userID1, userID2 string) (int, error) {
+//     driver, err := neo4j.NewDriver("neo4j://localhost:7687", neo4j.BasicAuth("username", "password", ""))
+//     if err != nil {
+//         return 0, err
+//     }
+//     defer driver.Close()
+
+//     session := driver.NewSession(neo4j.SessionConfig{})
+//     defer session.Close()
+
+//     query := `
+//         MATCH (u1:User {id: $userID1})<-[:FOLLOWS]-(m:User)-[:FOLLOWS]->(u2:User {id: $userID2})
+//         RETURN count(m) as mutualFollowersCount
+//     `
+//     params := map[string]interface{}{
+//         "userID1": userID1,
+//         "userID2": userID2,
+//     }
+
+//     result, err := session.Run(query, params)
+//     if err != nil {
+//         return 0, err
+//     }
+
+//     var mutualFollowersCount int
+//     if result.Next() {
+//         record := result.Record()
+//         mutualFollowersCount, _ = record.Get("mutualFollowersCount").(int)
+//     }
+
+//     if err = result.Err(); err != nil {
+//         return 0, err
+//     }
+
+//     return mutualFollowersCount, nil
+// }
