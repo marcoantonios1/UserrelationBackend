@@ -63,6 +63,11 @@ func Follow() gin.HandlerFunc {
 			return
 		}
 
+		if userIDObj == userToFollowIDObj {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot follow yourself"})
+			return
+		}
+
 		ctx := context.Background() // Consider using request-scoped context
 
 		// Increment the 'following' count of the user
@@ -150,6 +155,11 @@ func FollowRequest() gin.HandlerFunc {
 		userToFollowIDObj, err := primitive.ObjectIDFromHex(userToFollowID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID to follow"})
+			return
+		}
+
+		if userIDObj == userToFollowIDObj {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot follow yourself"})
 			return
 		}
 
