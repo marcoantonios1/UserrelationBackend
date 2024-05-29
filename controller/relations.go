@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j/dbtype"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -514,77 +515,173 @@ func ViewFollowers() gin.HandlerFunc {
 	}
 }
 
-func getMutualFollowers(userID1, userID2 string) ([]string, error) {
-	driver, err := neo4j.NewDriver("neo4j://localhost:7687", neo4j.BasicAuth("username", "password", ""))
-	if err != nil {
-		return nil, err
+func GetMutualFollowers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		usersearchID := c.Query("id")
+		userID, exists := c.Get("id")
+		if !exists {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "User ID not found in context"})
+			return
+		}
+
+		userIDObj, ok := userID.(primitive.ObjectID)
+		if !ok {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
+
+		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer driver.Close(context.Background())
+
+		// Create a new session
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		defer session.Close(context.Background())
+
+		result, err := session.ExecuteRead(context.Background(),
+			func(tx neo4j.ManagedTransaction) (interface{}, error) {
+				result, err := tx.Run(context.Background(), `
+				MATCH (u1:User {id: $userID1})<-[:FOLLOWING]-(m:User)-[:FOLLOWING]->(u2:User {id: $userID2})
+				RETURN m as mutualFollowers
+                `,
+					map[string]interface{}{
+						"userID1": usersearchID,
+						"userID2": userIDObj.Hex(),
+					},
+				)
+				if err != nil {
+					return nil, err
+				}
+
+				var users []model.Neo4jUser
+				for result.NextRecord(context.Background(), nil) {
+					userNode, ok := result.Record().Get("mutualFollowers")
+					if !ok {
+						return nil, errors.New("failed to get user node")
+					}
+					userNodeDb, ok := userNode.(dbtype.Node)
+					if !ok {
+						return nil, errors.New("failed to convert to dbtype.Node")
+					}
+					userMap := userNodeDb.Props
+
+					image, ok := userMap["image"].(string)
+					if !ok {
+						image = "" // or any default value
+					}
+					name, ok := userMap["name"].(string)
+					if !ok {
+						name = "" // or any default value
+					}
+					bio, ok := userMap["bio"].(string)
+					if !ok {
+						bio = "" // or any default value
+					}
+					private, ok := userMap["private"].(bool)
+					if !ok {
+						private = false // or any default value
+					}
+					user := model.Neo4jUser{
+						ID:        userMap["id"].(string),
+						UserName:  userMap["username"].(string),
+						Name:      name,
+						Image:     image,
+						Biography: bio,
+						Private:   private,
+					}
+
+					users = append(users, user)
+				}
+
+				return users, nil
+			},
+		)
+
+		if err != nil {
+			log.Print(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if len(result.([]model.Neo4jUser)) == 0 {
+			c.JSON(http.StatusOK, []model.Neo4jUser{})
+			return
+		}
+
+		// Return the list of users with matching structure
+		c.JSON(http.StatusOK, result)
 	}
-	defer driver.Close()
-
-	session := driver.NewSession(neo4j.SessionConfig{})
-	defer session.Close()
-
-	query := `
-        MATCH (u1:User {id: $userID1})<-[:FOLLOWING]-(m:User)-[:FOLLOWING]->(u2:User {id: $userID2})
-        RETURN m.id as mutualFollowerID
-    `
-	params := map[string]interface{}{
-		"userID1": userID1,
-		"userID2": userID2,
-	}
-
-	result, err := session.Run(query, params)
-	if err != nil {
-		return nil, err
-	}
-
-	var mutualFollowers []string
-	for result.Next() {
-		record := result.Record()
-		mutualFollowerID, _ := record.Get("mutualFollowerID")
-		mutualFollowers = append(mutualFollowers, mutualFollowerID.(string))
-	}
-
-	if err = result.Err(); err != nil {
-		return nil, err
-	}
-
-	return mutualFollowers, nil
 }
 
-// func getMutualFollowersCount(userID1, userID2 string) (int, error) {
-//     driver, err := neo4j.NewDriver("neo4j://localhost:7687", neo4j.BasicAuth("username", "password", ""))
-//     if err != nil {
-//         return 0, err
-//     }
-//     defer driver.Close()
+func GetMutualFollowersCount() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		usersearchID := c.Query("id")
+		userID, exists := c.Get("id")
+		if !exists {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "User ID not found in context"})
+			return
+		}
 
-//     session := driver.NewSession(neo4j.SessionConfig{})
-//     defer session.Close()
+		userIDObj, ok := userID.(primitive.ObjectID)
+		if !ok {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
 
-//     query := `
-//         MATCH (u1:User {id: $userID1})<-[:FOLLOWS]-(m:User)-[:FOLLOWS]->(u2:User {id: $userID2})
-//         RETURN count(m) as mutualFollowersCount
-//     `
-//     params := map[string]interface{}{
-//         "userID1": userID1,
-//         "userID2": userID2,
-//     }
+		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer func() {
+			if err := driver.Close(context.Background()); err != nil {
+				log.Printf("Error closing driver: %v", err)
+			}
+		}()
 
-//     result, err := session.Run(query, params)
-//     if err != nil {
-//         return 0, err
-//     }
+		// Create a new session
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		defer func() {
+			if err := session.Close(context.Background()); err != nil {
+				log.Printf("Error closing session: %v", err)
+			}
+		}()
 
-//     var mutualFollowersCount int
-//     if result.Next() {
-//         record := result.Record()
-//         mutualFollowersCount, _ = record.Get("mutualFollowersCount").(int)
-//     }
+		result, err := session.ExecuteRead(context.Background(),
+			func(tx neo4j.ManagedTransaction) (interface{}, error) {
+				query := `
+                MATCH (u1:User {id: $userID1})<-[:FOLLOWING]-(m:User)-[:FOLLOWING]->(u2:User {id: $userID2})
+                RETURN count(m) as mutualFollowersCount
+                `
+				params := map[string]interface{}{
+					"userID1": usersearchID,
+					"userID2": userIDObj.Hex(),
+				}
 
-//     if err = result.Err(); err != nil {
-//         return 0, err
-//     }
+				result, err := tx.Run(context.Background(), query, params)
+				if err != nil {
+					return nil, err
+				}
 
-//     return mutualFollowersCount, nil
-// }
+				if result.Next(context.Background()) {
+					record := result.Record()
+					if count, ok := record.Get("mutualFollowersCount"); ok {
+						return count.(int64), nil
+					}
+				}
+
+				return int64(0), nil
+			},
+		)
+
+		if err != nil {
+			log.Print(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		// Return the count of mutual followers
+		c.JSON(http.StatusOK, gin.H{"mutualFollowersCount": result})
+	}
+}

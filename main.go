@@ -26,6 +26,19 @@ func main() {
 	})
 	handler := c.Handler(router)
 
+	router.GET("/redirect", func(c *gin.Context) {
+		androidPackage := "com.yourapp" // Replace this with your Android package name
+		userId := c.Query("userId")
+		profileLink := "https://dolfins.co/userProfile/" + userId
+		playStoreLink := "https://play.google.com/store/apps/details?id=" + androidPackage
+
+		c.HTML(http.StatusOK, "redirect.html", gin.H{
+			"AndroidPackage": androidPackage,
+			"ProfileLink":    profileLink,
+			"PlayStoreLink":  playStoreLink,
+		})
+	})
+
 	route.Routes(router)
 
 	log.Fatal(http.ListenAndServe(":"+port, handler))

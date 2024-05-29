@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="refresh" content="0; url={{.PlayStoreLink}}">
+  <script type="text/javascript">
+    window.onload = function() {
+      window.location.href = "intent://{{.ProfileLink}}#Intent;scheme=https;package={{.AndroidPackage}};end";
+    }
+  </script>
+</head>
+<body>
+  If you are not redirected, <a href="{{.PlayStoreLink}}">click here</a>.
+</body>
+</html>
