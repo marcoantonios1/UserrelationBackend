@@ -28,8 +28,7 @@ func Routes(incomingRoutes *gin.Engine) {
 		userRoutes.GET("/user/unfollow/restaurant/unfollow-user-restaurant-relation", controller.UnFollowRestaurant())
 		userRoutes.GET("/users/viewing/users/total-users-user-request", controller.GetTotalFollowRequest())
 		userRoutes.GET("/users/viewing/users/total-users-user-mutual", controller.GetMutualFollowersCount())
-		//userRoutes.GET("/user/search/user/get/user/info", controller.GetOtherUserAndRelationship())
-
+		userRoutes.GET("/users/viewing/locations/total-administrative-area-level-1", controller.ViewAdminArea1())
 	}
 	incomingRoutes.NoRoute(func(c *gin.Context) {
 		// userIP := c.ClientIP()

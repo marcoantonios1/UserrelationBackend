@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
 	"userrelation/model"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +13,10 @@ import (
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j/dbtype"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+var Neo4j = os.Getenv("NEO4J_URL_USER")
+var Neo4j_User = os.Getenv("NEO4J_USER")
+var Neo4j_Password = os.Getenv("NEO4J_PASSWORD")
 
 func CheckUsersRelationship() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -22,7 +27,7 @@ func CheckUsersRelationship() gin.HandlerFunc {
 		userIDObj := userID.(primitive.ObjectID)
 
 		// Create a new driver for Neo4j
-		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -92,7 +97,7 @@ func CheckSearchedUsersRelationship() gin.HandlerFunc {
 		userIDObj := userID.(primitive.ObjectID)
 
 		// Create a new driver for Neo4j
-		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -161,7 +166,7 @@ func CheckRestaurantRelationship() gin.HandlerFunc {
 		ueserIdObj := userID.(primitive.ObjectID)
 
 		// Create a new driver for Neo4j
-		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -236,7 +241,7 @@ func RequestFollow() gin.HandlerFunc {
 			return
 		}
 		// Create a new driver for Neo4j
-		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -335,7 +340,7 @@ func ViewFollowing() gin.HandlerFunc {
 			usersearchID = userIDObj.Hex()
 		}
 		// Create a new driver for Neo4j
-		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -434,7 +439,7 @@ func ViewFollowers() gin.HandlerFunc {
 			usersearchID = userIDObj.Hex()
 		}
 		// Create a new driver for Neo4j
-		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -530,7 +535,7 @@ func GetMutualFollowers() gin.HandlerFunc {
 			return
 		}
 
-		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -630,7 +635,7 @@ func GetMutualFollowersCount() gin.HandlerFunc {
 			return
 		}
 
-		driver, err := neo4j.NewDriverWithContext("neo4j://localhost:7687", neo4j.BasicAuth("neo4j", "12345678", ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
 		if err != nil {
 			log.Fatal(err)
 		}
