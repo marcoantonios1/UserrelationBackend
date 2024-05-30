@@ -29,6 +29,7 @@ func Routes(incomingRoutes *gin.Engine) {
 		userRoutes.GET("/users/viewing/users/total-users-user-request", controller.GetTotalFollowRequest())
 		userRoutes.GET("/users/viewing/users/total-users-user-mutual", controller.GetMutualFollowersCount())
 		userRoutes.GET("/users/viewing/locations/total-administrative-area-level-1", controller.ViewAdminArea1())
+		userRoutes.GET("/users/viewing/locations/total-administrative-area-level-2", controller.ViewAdminArea2())
 	}
 	incomingRoutes.NoRoute(func(c *gin.Context) {
 		// userIP := c.ClientIP()
