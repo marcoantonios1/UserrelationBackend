@@ -40,3 +40,10 @@ type Neo4jUser struct {
 	Private   bool   `json:"private"`
 	Relation  string `json:"relation"`
 }
+
+type Restaurant struct {
+	Restaurant_ID   string `json:"_id" bson:"_id"`
+	Restaurant_Name string `json:"restaurant_name" bson:"restaurant_name" validate:"required,min=2,max=30"`
+	Description     string `json:"description" bson:"description" validate:"required,min=2,max=30"`
+	Image           string `json:"image" bson:"image"`
+}

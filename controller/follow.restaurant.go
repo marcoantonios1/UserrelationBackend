@@ -2,11 +2,15 @@ package controller
 
 import (
 	"context"
+	"errors"
+	"log"
 	"net/http"
 	"userrelation/database"
 	"userrelation/helper"
+	"userrelation/model"
 
 	"github.com/gin-gonic/gin"
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -93,5 +97,98 @@ func FollowRestaurant() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, "FOLLOWING")
 		go helper.KafkaFollowRestaurant(ctx, userIDObj.Hex(), userToFollowID)
+	}
+}
+
+func ViewFollowedRestaurant() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		usersearchID := c.Query("id")
+		userID, exists := c.Get("id")
+		if !exists {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "User ID not found in context"})
+			return
+		}
+
+		if usersearchID == "" {
+			userIDObj, ok := userID.(primitive.ObjectID)
+			if !ok {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+				return
+			}
+			usersearchID = userIDObj.Hex()
+		}
+		// Create a new driver for Neo4j
+		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer driver.Close(context.Background())
+
+		// Create a new session
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		defer session.Close(context.Background())
+
+		// Run the query to find users with REQUESTED relationship
+		result, err := session.ExecuteRead(context.Background(),
+			func(tx neo4j.ManagedTransaction) (interface{}, error) {
+				result, err := tx.Run(context.Background(), `
+                    MATCH (r:User {id: $userId})-[:FOLLOWING]->(u:Restaurant)
+                    RETURN u { .id,  .name, .image, .description } AS user
+                `,
+					map[string]interface{}{
+						"userId": usersearchID,
+					},
+				)
+				if err != nil {
+					return nil, err
+				}
+
+				var users []model.Restaurant
+				for result.NextRecord(context.Background(), nil) {
+					userNode, ok := result.Record().Get("user")
+					if !ok {
+						return nil, errors.New("failed to get user node")
+					}
+					userMap := userNode.(map[string]interface{})
+
+					image, ok := userMap["image"].(string)
+					if !ok {
+						image = "" // or any default value
+					}
+					name, ok := userMap["name"].(string)
+					if !ok {
+						name = "" // or any default value
+					}
+					description, ok := userMap["description"].(string)
+					if !ok {
+						description = "" // or any default value
+					}
+					user := model.Restaurant{
+						Restaurant_ID:   userMap["id"].(string),
+						Restaurant_Name: name,
+						Description:     description,
+						Image:           image,
+					}
+
+					users = append(users, user)
+				}
+
+				return users, nil
+			},
+		)
+
+		if err != nil {
+			log.Print(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if len(result.([]model.Restaurant)) == 0 {
+			c.JSON(http.StatusOK, []model.Restaurant{})
+			return
+		}
+
+		// Return the list of users with matching structure
+		c.JSON(http.StatusOK, result)
 	}
 }
