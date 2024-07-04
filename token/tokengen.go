@@ -11,6 +11,7 @@ import (
 type SignedDetails struct {
 	Uid         primitive.ObjectID
 	Logged      bool
+	Blocked     bool
 	DeviceId    string
 	DeviceType  string
 	OpSys       string
@@ -49,6 +50,10 @@ func ValidateToken(signedtoken string) (*SignedDetails, string) {
 			return nil, "token is expired"
 		}
 
+		if claims.Blocked {
+			return nil, "blocked user"
+		}
+
 		// Validate specific permission (can be extended for other checks)
 		if !hasPermissions(claims.Permission, "PROFILE") {
 			return nil, "insufficient permission"
@@ -65,6 +70,10 @@ func ValidateToken(signedtoken string) (*SignedDetails, string) {
 	// Validate expiration using standard claims
 	if !token.Valid {
 		return nil, "token is expired"
+	}
+
+	if claims.Blocked {
+		return nil, "blocked user"
 	}
 
 	// Validate specific permission (can be extended for other checks)
