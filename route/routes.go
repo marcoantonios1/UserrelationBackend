@@ -30,6 +30,7 @@ func Routes(incomingRoutes *gin.Engine) {
 		userRoutes.GET("/users/viewing/users/total-users-user-request", controller.GetTotalFollowRequest())
 		userRoutes.GET("/users/viewing/users/total-users-user-mutual", controller.GetMutualFollowersCount())
 		userRoutes.POST("/users/reviewing/restaurnats/feedback", controller.AddFeedback())
+		userRoutes.GET("/users/checking/restaurnats/feedback", controller.CheckIfFeedback())
 	}
 	incomingRoutes.NoRoute(func(c *gin.Context) {
 		// userIP := c.ClientIP()

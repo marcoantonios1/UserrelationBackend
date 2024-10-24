@@ -8,6 +8,7 @@ import (
 	"userrelation/model"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -75,5 +76,33 @@ func AddFeedback() gin.HandlerFunc {
 
 		// Return success response
 		c.JSON(http.StatusOK, "Feedback submitted successfully")
+	}
+}
+
+func CheckIfFeedback() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		reservationID := c.Query("reservation_id")
+		reservationIDObj, err := primitive.ObjectIDFromHex(reservationID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid reservation ID"})
+			return
+		}
+
+		filter := bson.M{"reservation_id": reservationIDObj}
+		err = FeedbackCollection.FindOne(c, filter).Err() // Just checking for the error without decoding
+
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				// No feedback found for this reservation
+				c.JSON(http.StatusNotFound, gin.H{"message": "No feedback found"})
+				return
+			}
+			// Handle any other database errors
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error checking feedback"})
+			return
+		}
+
+		// Feedback exists for this reservation
+		c.JSON(http.StatusOK, gin.H{"message": "Feedback found"})
 	}
 }
