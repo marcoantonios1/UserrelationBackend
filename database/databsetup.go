@@ -51,3 +51,10 @@ func RestaurantsData(restaurants *mongo.Client, collectionName string) *mongo.Co
 	var collection *mongo.Collection = restaurants.Database("Restaurants").Collection(collectionName)
 	return collection
 }
+
+var Orders *mongo.Client = DBSet()
+
+func OrdersData(orders *mongo.Client, collectionName string) *mongo.Collection {
+	var collection *mongo.Collection = orders.Database("Orders").Collection(collectionName)
+	return collection
+}
