@@ -47,3 +47,14 @@ type Restaurant struct {
 	Description     string `json:"description" bson:"description" validate:"required,min=2,max=30"`
 	Image           string `json:"image" bson:"image"`
 }
+
+type Feedback struct {
+	ID             primitive.ObjectID `json:"_id" bson:"_id"`
+	User_ID        primitive.ObjectID `json:"user_id" bson:"user_id"`
+	Restaurant_ID  primitive.ObjectID `json:"restaurant_id" bson:"restaurant_id"`
+	Location_ID    primitive.ObjectID `json:"location_id" bson:"location_id"`
+	Reservation_ID primitive.ObjectID `json:"reservation_id" bson:"reservation_id"`
+	Feedback       string             `json:"feedback,omitempty" bson:"feedback,omitempty"`
+	Rating         uint32             `json:"rating" bson:"rating"`
+	Created_At     time.Time          `json:"created_at" bson:"created_at"`
+}
