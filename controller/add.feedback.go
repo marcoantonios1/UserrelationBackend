@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"time"
 	"userrelation/database"
+	"userrelation/helper"
 	"userrelation/model"
 
 	"github.com/gin-gonic/gin"
@@ -61,6 +63,12 @@ func AddFeedback() gin.HandlerFunc {
 		// Ensure feedback.Rating is a float32
 		feedbackRating := float32(feedback.Rating)
 
+		// Check if feedback comment is empty
+		increaseTotalReviews := false
+		if feedback.Feedback != "" {
+			increaseTotalReviews = true
+		}
+
 		// Populate feedback object with IDs and timestamp
 		feedback.ID = primitive.NewObjectID()
 		feedback.User_ID = userIDObj
@@ -69,77 +77,84 @@ func AddFeedback() gin.HandlerFunc {
 		feedback.Reservation_ID = reservationIDObj
 		feedback.Created_At = time.Now()
 
-		// Insert feedback into the FeedbackCollection
-		_, err = FeedbackCollection.InsertOne(c, feedback)
-		if err != nil {
-			log.Print(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save feedback"})
-			return
+		if feedback.Feedback == "" {
+			_, err = FeedbackCollection.InsertOne(c, feedback)
+			if err != nil {
+				log.Print(err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save feedback"})
+				return
+			}
+		}else{
+			go helper.KafkaLeaveFeedbackRestaurant(context.Background(), feedback.User_ID.Hex(), feedback.Restaurant_ID.Hex(), feedback.Location_ID.Hex(), feedback.Reservation_ID.Hex(), feedback.Rating, feedback.Feedback, feedback.Created_At.String())
+			feedback.Feedback = ""
+			_, err = FeedbackCollection.InsertOne(c, feedback)
+			if err != nil {
+				log.Print(err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save feedback"})
+				return
+			}
 		}
 
-		// Update restaurant's rating and total reviews atomically
-		restaurantPipeline := mongo.Pipeline{
-			{{Key: "$set", Value: bson.D{
-				{Key: "total_reviews", Value: bson.D{
-					{Key: "$add", Value: bson.A{
-						bson.D{{Key: "$ifNull", Value: bson.A{"$total_reviews", 0}}},
-						1,
-					}},
+		// Update restaurant's rating, total_ratings, and total_reviews
+		restaurantFilter := bson.M{"_id": restaurantIDObj}
+		restaurantUpdate := bson.M{
+			"$inc": bson.M{
+				"total_ratings": 1,
+			},
+			"$set": bson.M{
+				"updated_at": time.Now(),
+			},
+		}
+
+		if increaseTotalReviews {
+			restaurantUpdate["$inc"].(bson.M)["total_reviews"] = 1
+		}
+
+		// Use $inc and $set in a single atomic update
+		restaurantUpdate["$set"].(bson.M)["rating"] = bson.M{
+			"$divide": bson.A{
+				bson.M{"$add": bson.A{
+					bson.M{"$multiply": bson.A{"$rating", "$total_ratings"}},
+					feedbackRating,
 				}},
-			}}},
-			{{Key: "$set", Value: bson.D{
-				{Key: "rating", Value: bson.D{
-					{Key: "$add", Value: bson.A{
-						bson.D{{Key: "$ifNull", Value: bson.A{bson.D{{Key: "$toDouble", Value: "$rating"}}, 0.0}}},
-						bson.D{{Key: "$divide", Value: bson.A{
-							bson.D{{Key: "$subtract", Value: bson.A{
-								feedbackRating,
-								bson.D{{Key: "$ifNull", Value: bson.A{bson.D{{Key: "$toDouble", Value: "$rating"}}, 0.0}}},
-							}}},
-							bson.D{{Key: "$toDouble", Value: "$total_reviews"}},
-						}}},
-					}},
-				}},
-				{Key: "updated_at", Value: time.Now()},
-			}}},
+				bson.M{"$add": bson.A{"$total_ratings", 1}},
+			},
 		}
 
 		// Update restaurant document
-		_, err = RestaurantCollection.UpdateByID(c, restaurantIDObj, restaurantPipeline)
+		_, err = RestaurantCollection.UpdateOne(c, restaurantFilter, restaurantUpdate)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating restaurant rating"})
 			return
 		}
 
-		// Update location's rating and total reviews atomically
-		locationPipeline := mongo.Pipeline{
-			{{Key: "$set", Value: bson.D{
-				{Key: "total_reviews", Value: bson.D{
-					{Key: "$add", Value: bson.A{
-						bson.D{{Key: "$ifNull", Value: bson.A{"$total_reviews", 0}}},
-						1,
-					}},
+		// Update location's rating, total_ratings, and total_reviews
+		locationFilter := bson.M{"_id": locationIDObj}
+		locationUpdate := bson.M{
+			"$inc": bson.M{
+				"total_ratings": 1,
+			},
+			"$set": bson.M{
+				"updated_at": time.Now(),
+			},
+		}
+
+		if increaseTotalReviews {
+			locationUpdate["$inc"].(bson.M)["total_reviews"] = 1
+		}
+
+		locationUpdate["$set"].(bson.M)["rating"] = bson.M{
+			"$divide": bson.A{
+				bson.M{"$add": bson.A{
+					bson.M{"$multiply": bson.A{"$rating", "$total_ratings"}},
+					feedbackRating,
 				}},
-			}}},
-			{{Key: "$set", Value: bson.D{
-				{Key: "rating", Value: bson.D{
-					{Key: "$add", Value: bson.A{
-						bson.D{{Key: "$ifNull", Value: bson.A{bson.D{{Key: "$toDouble", Value: "$rating"}}, 0.0}}},
-						bson.D{{Key: "$divide", Value: bson.A{
-							bson.D{{Key: "$subtract", Value: bson.A{
-								feedbackRating,
-								bson.D{{Key: "$ifNull", Value: bson.A{bson.D{{Key: "$toDouble", Value: "$rating"}}, 0.0}}},
-							}}},
-							bson.D{{Key: "$toDouble", Value: "$total_reviews"}},
-						}}},
-					}},
-				}},
-				{Key: "updated_at", Value: time.Now()},
-			}}},
+				bson.M{"$add": bson.A{"$total_ratings", 1}},
+			},
 		}
 
 		// Update location document
-		_, err = LocationCollection.UpdateByID(c, locationIDObj, locationPipeline)
+		_, err = LocationCollection.UpdateOne(c, locationFilter, locationUpdate)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating location rating"})
 			return
