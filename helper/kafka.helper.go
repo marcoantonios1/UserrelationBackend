@@ -289,3 +289,44 @@ func KafkaUnFollowRestaurant(ctx context.Context, followerId string, userToFollo
 		log.Println("Error sending message to Kafka:", err)
 	}
 }
+
+///////////////FEEDBACK////////////////////
+
+func KafkaLeaveFeedbackRestaurant(ctx context.Context, userId string, restaurantId string, locationId string, reservationId string, rating uint16, feedback string, createdAt string) {
+	// Kafka configuration
+	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
+		Brokers:  []string{"localhost:9092"},
+		Topic:    "user_restaurant_feedback",
+		Balancer: &kafka.LeastBytes{},
+	})
+
+	defer kafkaWriter.Close()
+
+	// Prepare and send the message
+	message := map[string]interface{}{
+		"userId":        userId,
+		"restaurantId":  restaurantId,
+		"locationId":    locationId,
+		"reservationId": reservationId,
+		"rating":        rating,
+		"feedback":      feedback,
+		"createdAt":     createdAt,
+	}
+
+	messageJSON, err := json.Marshal(message)
+	if err != nil {
+		log.Println("Error marshaling Kafka message:", err)
+		return
+	}
+
+	msg := kafka.Message{
+		Key:   []byte(userId),
+		Value: messageJSON,
+	}
+
+	err = kafkaWriter.WriteMessages(ctx, msg)
+	if err != nil {
+		// Handle Kafka sending error (log or return an error)
+		log.Println("Error sending message to Kafka:", err)
+	}
+}
