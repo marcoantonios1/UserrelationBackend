@@ -163,7 +163,7 @@ func CheckRestaurantRelationship() gin.HandlerFunc {
 		userID, _ := c.Get("id")
 		restaurantToFollowID := c.Query("resto_id")
 
-		ueserIdObj := userID.(primitive.ObjectID)
+		userIdObj := userID.(primitive.ObjectID)
 
 		// Create a new driver for Neo4j
 		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
@@ -176,38 +176,42 @@ func CheckRestaurantRelationship() gin.HandlerFunc {
 		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
 		defer session.Close(context.Background())
 
-		// Run the query to check if the user is following the other user
+		// Run the query to check if the user has a FOLLOWING relationship with the restaurant
 		result, err := session.ExecuteRead(context.Background(),
 			func(tx neo4j.ManagedTransaction) (any, error) {
-				result, err := tx.Run(context.Background(), "MATCH (a:User)-[r]->(b:Restaurant ) WHERE a.id = $userID AND b.id = $restaurantToFollowID RETURN type(r)",
-					map[string]interface{}{
-						"userID":               ueserIdObj.Hex(),
-						"restaurantToFollowID": restaurantToFollowID,
-					})
+				query := `
+					MATCH (a:User)-[r:FOLLOWING]->(b:Restaurant)
+					WHERE a.id = $userID AND b.id = $restaurantToFollowID
+					RETURN COUNT(r) AS followingCount
+				`
+				params := map[string]interface{}{
+					"userID":               userIdObj.Hex(),
+					"restaurantToFollowID": restaurantToFollowID,
+				}
+
+				res, err := tx.Run(context.Background(), query, params)
 				if err != nil {
-					return nil, err // Handle error here (e.g., return specific error)
+					return nil, err
 				}
 
-				records, err := result.Collect(context.Background())
+				record, err := res.Single(context.Background())
 				if err != nil {
-					return nil, err // Handle error here
+					// No "FOLLOWING" relationship was found
+					return "FOLLOW", nil
 				}
 
-				// Check if any records exist (meaning a relationship exists)
-				if len(records) == 0 {
-					return "FOLLOW", nil // Indicate no relationship found
-				}
-
-				// Extract the relationship type from the first record
-				value, ok := records[0].Get("type(r)")
+				// Get the count of FOLLOWING relationships
+				followingCount, _ := record.Get("followingCount")
+				count, ok := followingCount.(int64)
 				if !ok {
-					// Handle case where key "type(r)" doesn't exist (log or return error)
-					log.Println("Error: Key 'type(r)' not found in record")
-					return nil, errors.New("unexpected record structure") // Replace with appropriate error
+					return nil, errors.New("unexpected count type")
 				}
 
-				relationshipType := value.(string)
-				return relationshipType, nil
+				// If there is a FOLLOWING relationship, return "FOLLOWING"
+				if count > 0 {
+					return "FOLLOWING", nil
+				}
+				return "FOLLOW", nil
 			})
 		if err != nil {
 			log.Fatal(err)
@@ -216,8 +220,8 @@ func CheckRestaurantRelationship() gin.HandlerFunc {
 		// Respond based on the result
 		relation, ok := result.(string)
 		if !ok {
-			// Handle unexpected result type (log or return error)
 			log.Printf("Unexpected result type: %T", result)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 			return
 		}
 

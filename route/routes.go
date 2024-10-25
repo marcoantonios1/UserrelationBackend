@@ -31,6 +31,8 @@ func Routes(incomingRoutes *gin.Engine) {
 		userRoutes.GET("/users/viewing/users/total-users-user-mutual", controller.GetMutualFollowersCount())
 		userRoutes.POST("/users/reviewing/restaurnats/feedback", controller.AddFeedback())
 		userRoutes.GET("/users/checking/restaurnats/feedback", controller.CheckIfFeedback())
+		userRoutes.GET("/users/viewing/all/restaurnats/feedback", controller.ViewRestaurantFeedback())
+		userRoutes.GET("/users/viewing/total/restaurnats/feedback/stars", controller.GetStarCounts())
 	}
 	incomingRoutes.NoRoute(func(c *gin.Context) {
 		// userIP := c.ClientIP()

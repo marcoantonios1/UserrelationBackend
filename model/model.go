@@ -61,3 +61,66 @@ type Feedback struct {
 	Rating         uint16             `json:"rating" bson:"rating"`
 	Created_At     time.Time          `json:"created_at" bson:"created_at"`
 }
+
+type RestaurantFeedback struct {
+	UserID    string `json:"user_id"`
+	Username  string `json:"username"`
+	Image     string `json:"image"`
+	Feedback  string `json:"feedback"`
+	Rating    int    `json:"rating"`
+	CreatedAt string `json:"created_at"`
+}
+
+type TotalCountPreStar struct {
+	FiveStars  int `json:"five_stars"`
+	FourStars  int `json:"four_stars"`
+	ThreeStars int `json:"three_stars"`
+	TwoStars   int `json:"tow_stars"`
+	OneStar    int `json:"one_star"`
+}
+
+type RestaurantFeedbackUpdate struct {
+	Restaurant_ID   primitive.ObjectID `json:"_id" bson:"_id"`
+	Restaurant_Name *string            `json:"restaurant_name" bson:"restaurant_name" validate:"required,min=2,max=30"`
+	Description     *string            `json:"description" bson:"description" validate:"required,min=2,max=30"`
+	Image           *string            `json:"image" bson:"image"`
+	Followers       uint32             `json:"followers" bson:"followers"`
+	Price           float64            `json:"price,omitempty" bson:"price,omitempty"`
+	Rating          float64            `json:"rating,omitempty" bson:"rating,omitempty"`
+	Total_Reviews   uint32             `json:"total_reviews,omitempty" bson:"total_reviews,omitempty"`
+	TotalRatings    uint32             `json:"total_ratings,omitempty" bson:"total_ratings,omitempty"`
+	Delivery        bool               `json:"delivery" default:"false" bson:"delivery"`
+	Pickup          bool               `json:"pickup" default:"false" bson:"pickup"`
+	EatIn           bool               `json:"eat_in" default:"false" bson:"eat_in"`
+	Status          bool               `json:"status" bson:"status"`
+	Ads             bool               `json:"ads" bson:"ads"`
+	Created_At      time.Time          `json:"created_at" bson:"created_at"`
+	Updated_At      time.Time          `json:"updated_at" bson:"updated_at"`
+}
+
+type Location struct {
+	ID                       primitive.ObjectID `json:"_id" bson:"_id"`
+	RestaurantID             primitive.ObjectID `bson:"restaurant_id"`
+	Name                     *string            `json:"name" bson:"name" validate:"required"`
+	Locality                 *string            `json:"locality" bson:"locality" validate:"required"`
+	AdministrativeAreaLevel2 *string            `json:"administrative_area_level_2" bson:"administrative_area_level_2" validate:"required"`
+	AdministrativeAreaLevel1 *string            `json:"administrative_area_level_1" bson:"administrative_area_level_1" validate:"required"`
+	Country                  *string            `json:"country" bson:"country" validate:"required"`
+	Address                  *string            `json:"address" bson:"address" validate:"required"`
+	Lat                      *float64           `json:"lat" bson:"lat" validate:"required"`
+	Long                     *float64           `json:"long" bson:"long" validate:"required"`
+	Price                    *float64           `json:"price,omitempty" bson:"price,omitempty"`
+	Rating                   float64            `json:"rating,omitempty" bson:"rating,omitempty"`
+	TotalRatings             uint32             `json:"total_ratings,omitempty" bson:"total_ratings,omitempty"`
+	Total_Reviews            uint32             `json:"total_reviews,omitempty" bson:"total_reviews,omitempty"`
+	Closed                   bool               `json:"closed" bson:"closed"`
+	Delivery                 bool               `json:"delivery" default:"false" bson:"delivery"`
+	Pickup                   bool               `json:"pickup" default:"false" bson:"pickup"`
+	EatIn                    bool               `json:"eat_in" default:"false" bson:"eat_in"`
+	MinCharge                bool               `json:"min_charge" default:"false" bson:"min_charge"`
+	MinChargePerPerson       *uint8             `json:"min_charge_per_pers,omitempty" bson:"min_charge_per_pers,omitempty"`
+	AlwaysOpen               bool               `json:"always_open" default:"false" bson:"always_open"`
+	MaxDeliveryDistanceKm    float64            `json:"max_delivery_distance_km" bson:"max_delivery_distance_km"` // New field
+	CreatedAt                time.Time          `json:"created_at" bson:"created_at"`
+	UpdatedAt                time.Time          `json:"updated_at" bson:"updated_at"`
+}
