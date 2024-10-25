@@ -84,7 +84,7 @@ func AddFeedback() gin.HandlerFunc {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save feedback"})
 				return
 			}
-		}else{
+		} else {
 			go helper.KafkaLeaveFeedbackRestaurant(context.Background(), feedback.User_ID.Hex(), feedback.Restaurant_ID.Hex(), feedback.Location_ID.Hex(), feedback.Reservation_ID.Hex(), feedback.Rating, feedback.Feedback, feedback.Created_At.String())
 			feedback.Feedback = ""
 			_, err = FeedbackCollection.InsertOne(c, feedback)
@@ -97,28 +97,34 @@ func AddFeedback() gin.HandlerFunc {
 
 		// Update restaurant's rating, total_ratings, and total_reviews
 		restaurantFilter := bson.M{"_id": restaurantIDObj}
+
+		// Fetch current rating and total_ratings
+		var restaurant model.RestaurantFeedbackUpdate
+		err = RestaurantCollection.FindOne(c, restaurantFilter).Decode(&restaurant)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching restaurant data"})
+			return
+		}
+
+		currentRating := restaurant.Rating
+		currentTotalRatings := restaurant.TotalRatings
+
+		// Compute new total_ratings and new rating
+		newTotalRatings := currentTotalRatings + 1
+		newRating := ((currentRating * float64(currentTotalRatings)) + float64(feedbackRating)) / float64(newTotalRatings)
+
 		restaurantUpdate := bson.M{
+			"$set": bson.M{
+				"rating":     newRating,
+				"updated_at": time.Now(),
+			},
 			"$inc": bson.M{
 				"total_ratings": 1,
-			},
-			"$set": bson.M{
-				"updated_at": time.Now(),
 			},
 		}
 
 		if increaseTotalReviews {
 			restaurantUpdate["$inc"].(bson.M)["total_reviews"] = 1
-		}
-
-		// Use $inc and $set in a single atomic update
-		restaurantUpdate["$set"].(bson.M)["rating"] = bson.M{
-			"$divide": bson.A{
-				bson.M{"$add": bson.A{
-					bson.M{"$multiply": bson.A{"$rating", "$total_ratings"}},
-					feedbackRating,
-				}},
-				bson.M{"$add": bson.A{"$total_ratings", 1}},
-			},
 		}
 
 		// Update restaurant document
@@ -130,27 +136,34 @@ func AddFeedback() gin.HandlerFunc {
 
 		// Update location's rating, total_ratings, and total_reviews
 		locationFilter := bson.M{"_id": locationIDObj}
+
+		// Fetch current rating and total_ratings for location
+		var location model.Location
+		err = LocationCollection.FindOne(c, locationFilter).Decode(&location)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching location data"})
+			return
+		}
+
+		currentLocationRating := location.Rating
+		currentLocationTotalRatings := location.TotalRatings
+
+		// Compute new total_ratings and new rating for location
+		newLocationTotalRatings := currentLocationTotalRatings + 1
+		newLocationRating := ((currentLocationRating * float64(currentLocationTotalRatings)) + float64(feedbackRating)) / float64(newLocationTotalRatings)
+
 		locationUpdate := bson.M{
+			"$set": bson.M{
+				"rating":     newLocationRating,
+				"updated_at": time.Now(),
+			},
 			"$inc": bson.M{
 				"total_ratings": 1,
-			},
-			"$set": bson.M{
-				"updated_at": time.Now(),
 			},
 		}
 
 		if increaseTotalReviews {
 			locationUpdate["$inc"].(bson.M)["total_reviews"] = 1
-		}
-
-		locationUpdate["$set"].(bson.M)["rating"] = bson.M{
-			"$divide": bson.A{
-				bson.M{"$add": bson.A{
-					bson.M{"$multiply": bson.A{"$rating", "$total_ratings"}},
-					feedbackRating,
-				}},
-				bson.M{"$add": bson.A{"$total_ratings", 1}},
-			},
 		}
 
 		// Update location document
@@ -159,6 +172,8 @@ func AddFeedback() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating location rating"})
 			return
 		}
+
+		// --- New Code Ends Here ---
 
 		// Return success response
 		c.JSON(http.StatusOK, gin.H{"message": "Feedback submitted and ratings updated successfully"})
