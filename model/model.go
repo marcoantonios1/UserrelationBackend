@@ -75,7 +75,7 @@ type TotalCountPreStar struct {
 	FiveStars  int `json:"five_stars"`
 	FourStars  int `json:"four_stars"`
 	ThreeStars int `json:"three_stars"`
-	TwoStars   int `json:"tow_stars"`
+	TwoStars   int `json:"two_stars"`
 	OneStar    int `json:"one_star"`
 }
 
