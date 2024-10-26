@@ -17,9 +17,14 @@ import (
 func ViewRestaurantFeedback() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		restaurantID := c.Query("restaurantId")
+		locationID := c.Query("locationId")
+		isLocation := false
 		if restaurantID == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Restaurant ID is required"})
 			return
+		}
+		if locationID != "" {
+			isLocation = true
 		}
 
 		// Create a new driver for Neo4j
@@ -36,15 +41,30 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 		// Run the query to get feedback with user info
 		result, err := session.ExecuteRead(context.Background(),
 			func(tx neo4j.ManagedTransaction) (interface{}, error) {
-				result, err := tx.Run(context.Background(), `
+				var result neo4j.ResultWithContext
+				if isLocation {
+					result, err = tx.Run(context.Background(), `
+                    MATCH (u:User)-[r:REVIEWED]->(restaurant:Restaurant {id: $restaurantId})
+                    WHERE r.locationId = $locationId
+                    RETURN u { .id, .username, .image } AS user, 
+                           r { .feedback, .rating, .createdAt } AS review
+                `,
+						map[string]interface{}{
+							"restaurantId": restaurantID,
+							"locationId":   locationID,
+						},
+					)
+				} else {
+					result, err = tx.Run(context.Background(), `
                     MATCH (u:User)-[r:REVIEWED]->(restaurant:Restaurant {id: $restaurantId})
                     RETURN u { .id, .username, .image } AS user, 
                            r { .feedback, .rating, .createdAt } AS review
                 `,
-					map[string]interface{}{
-						"restaurantId": restaurantID,
-					},
-				)
+						map[string]interface{}{
+							"restaurantId": restaurantID,
+						},
+					)
+				}
 				if err != nil {
 					return nil, err
 				}
@@ -95,17 +115,27 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 			return
 		}
 
+		feedbacks, ok := result.([]model.RestaurantFeedback)
+		if !ok {
+			feedbacks = []model.RestaurantFeedback{}
+		}
+
 		// Return the list of feedback items
-		c.JSON(http.StatusOK, result)
+		c.JSON(http.StatusOK, feedbacks)
 	}
 }
 
 func GetStarCounts() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		restaurantID := c.Query("restaurantId")
+		isLocation := false
 		if restaurantID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Restaurant ID is required"})
-			return
+			restaurantID = c.Query("locationId")
+			isLocation = true
+			if restaurantID == "" {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Restaurant ID is required"})
+				return
+			}
 		}
 		restaurantIDObj, err := primitive.ObjectIDFromHex(restaurantID)
 		if err != nil {
@@ -114,12 +144,23 @@ func GetStarCounts() gin.HandlerFunc {
 		}
 
 		// MongoDB aggregation pipeline to count each star rating
-		pipeline := mongo.Pipeline{
-			{{Key: "$match", Value: bson.D{{Key: "restaurant_id", Value: restaurantIDObj}}}},
-			{{Key: "$group", Value: bson.D{
-				{Key: "_id", Value: "$rating"},
-				{Key: "count", Value: bson.D{{Key: "$sum", Value: 1}}},
-			}}},
+		var pipeline mongo.Pipeline
+		if isLocation {
+			pipeline = mongo.Pipeline{
+				{{Key: "$match", Value: bson.D{{Key: "location_id", Value: restaurantIDObj}}}},
+				{{Key: "$group", Value: bson.D{
+					{Key: "_id", Value: "$rating"},
+					{Key: "count", Value: bson.D{{Key: "$sum", Value: 1}}},
+				}}},
+			}
+		} else {
+			pipeline = mongo.Pipeline{
+				{{Key: "$match", Value: bson.D{{Key: "restaurant_id", Value: restaurantIDObj}}}},
+				{{Key: "$group", Value: bson.D{
+					{Key: "_id", Value: "$rating"},
+					{Key: "count", Value: bson.D{{Key: "$sum", Value: 1}}},
+				}}},
+			}
 		}
 
 		// Execute the aggregation
