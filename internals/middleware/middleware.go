@@ -3,7 +3,8 @@ package middleware
 import (
 	"net/http"
 	"strings"
-	"userrelation/token"
+
+	token "userrelation/internals/utils"
 
 	"github.com/gin-gonic/gin"
 )

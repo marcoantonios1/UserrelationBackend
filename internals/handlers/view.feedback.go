@@ -1,11 +1,11 @@
-package controller
+package handlers
 
 import (
 	"context"
 	"errors"
 	"log"
 	"net/http"
-	"userrelation/model"
+	"userrelation/internals/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
@@ -69,7 +69,7 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 					return nil, err
 				}
 
-				var feedbacks []model.RestaurantFeedback
+				var feedbacks []models.RestaurantFeedback
 				for result.NextRecord(context.Background(), nil) {
 					// Extract user and review details
 					userNode, ok := result.Record().Get("user")
@@ -95,7 +95,7 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 					createdAt, _ := reviewMap["createdAt"].(string)
 
 					// Create a new feedback item
-					feedbacks = append(feedbacks, model.RestaurantFeedback{
+					feedbacks = append(feedbacks, models.RestaurantFeedback{
 						UserID:    userID,
 						Username:  username,
 						Image:     image,
@@ -115,9 +115,9 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 			return
 		}
 
-		feedbacks, ok := result.([]model.RestaurantFeedback)
+		feedbacks, ok := result.([]models.RestaurantFeedback)
 		if !ok {
-			feedbacks = []model.RestaurantFeedback{}
+			feedbacks = []models.RestaurantFeedback{}
 		}
 
 		// Return the list of feedback items
@@ -172,7 +172,7 @@ func GetStarCounts() gin.HandlerFunc {
 		defer cursor.Close(context.Background())
 
 		// Initialize star counts
-		var counts model.TotalCountPreStar
+		var counts models.TotalCountPreStar
 		for cursor.Next(context.Background()) {
 			var result struct {
 				ID    int `bson:"_id"`

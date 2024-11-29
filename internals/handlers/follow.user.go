@@ -1,11 +1,11 @@
-package controller
+package handlers
 
 import (
 	"context"
 	"net/http"
-	"userrelation/database"
-	"userrelation/helper"
-	"userrelation/model"
+	"userrelation/internals/models"
+	helper "userrelation/internals/utils"
+	"userrelation/pkg/database"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -29,7 +29,7 @@ func GetTotalFollowRequest() gin.HandlerFunc {
 		ctx := context.Background() // Consider using request-scoped context
 
 		// Find the user
-		var user model.User
+		var user models.User
 		err := UsersCollection.FindOne(ctx, bson.M{"_id": userIDObj}).Decode(&user)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find user"})

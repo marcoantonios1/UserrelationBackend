@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func DBSet() *mongo.Client {
+func DBSetUsers() *mongo.Client {
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -38,23 +38,9 @@ func DBSet() *mongo.Client {
 	return client
 }
 
-var Users *mongo.Client = DBSet()
+var Users *mongo.Client = DBSetUsers()
 
 func UsersData(users *mongo.Client, collectionName string) *mongo.Collection {
 	var collection *mongo.Collection = users.Database("User").Collection(collectionName)
-	return collection
-}
-
-var Restaurants *mongo.Client = DBSet()
-
-func RestaurantsData(restaurants *mongo.Client, collectionName string) *mongo.Collection {
-	var collection *mongo.Collection = restaurants.Database("Restaurants").Collection(collectionName)
-	return collection
-}
-
-var Orders *mongo.Client = DBSet()
-
-func OrdersData(orders *mongo.Client, collectionName string) *mongo.Collection {
-	var collection *mongo.Collection = orders.Database("Orders").Collection(collectionName)
 	return collection
 }
