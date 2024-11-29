@@ -1,4 +1,4 @@
-package controller
+package handlers
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"userrelation/model"
+	"userrelation/internals/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
@@ -270,7 +270,7 @@ func RequestFollow() gin.HandlerFunc {
 					return nil, err
 				}
 
-				var users []model.Neo4jUser
+				var users []models.Neo4jUser
 				for result.NextRecord(context.Background(), nil) {
 					userNode, ok := result.Record().Get("user")
 					if !ok {
@@ -294,7 +294,7 @@ func RequestFollow() gin.HandlerFunc {
 					if !ok {
 						private = false // or any default value
 					}
-					user := model.Neo4jUser{
+					user := models.Neo4jUser{
 						ID:        userMap["id"].(string),
 						UserName:  userMap["username"].(string),
 						Name:      name,
@@ -316,8 +316,8 @@ func RequestFollow() gin.HandlerFunc {
 			return
 		}
 
-		if len(result.([]model.Neo4jUser)) == 0 {
-			c.JSON(http.StatusOK, []model.Neo4jUser{})
+		if len(result.([]models.Neo4jUser)) == 0 {
+			c.JSON(http.StatusOK, []models.Neo4jUser{})
 			return
 		}
 
@@ -369,7 +369,7 @@ func ViewFollowing() gin.HandlerFunc {
 					return nil, err
 				}
 
-				var users []model.Neo4jUser
+				var users []models.Neo4jUser
 				for result.NextRecord(context.Background(), nil) {
 					userNode, ok := result.Record().Get("user")
 					if !ok {
@@ -393,7 +393,7 @@ func ViewFollowing() gin.HandlerFunc {
 					if !ok {
 						private = false // or any default value
 					}
-					user := model.Neo4jUser{
+					user := models.Neo4jUser{
 						ID:        userMap["id"].(string),
 						UserName:  userMap["username"].(string),
 						Name:      name,
@@ -415,8 +415,8 @@ func ViewFollowing() gin.HandlerFunc {
 			return
 		}
 
-		if len(result.([]model.Neo4jUser)) == 0 {
-			c.JSON(http.StatusOK, []model.Neo4jUser{})
+		if len(result.([]models.Neo4jUser)) == 0 {
+			c.JSON(http.StatusOK, []models.Neo4jUser{})
 			return
 		}
 
@@ -468,7 +468,7 @@ func ViewFollowers() gin.HandlerFunc {
 					return nil, err
 				}
 
-				var users []model.Neo4jUser
+				var users []models.Neo4jUser
 				for result.NextRecord(context.Background(), nil) {
 					userNode, ok := result.Record().Get("user")
 					if !ok {
@@ -492,7 +492,7 @@ func ViewFollowers() gin.HandlerFunc {
 					if !ok {
 						private = false // or any default value
 					}
-					user := model.Neo4jUser{
+					user := models.Neo4jUser{
 						ID:        userMap["id"].(string),
 						UserName:  userMap["username"].(string),
 						Name:      name,
@@ -514,8 +514,8 @@ func ViewFollowers() gin.HandlerFunc {
 			return
 		}
 
-		if len(result.([]model.Neo4jUser)) == 0 {
-			c.JSON(http.StatusOK, []model.Neo4jUser{})
+		if len(result.([]models.Neo4jUser)) == 0 {
+			c.JSON(http.StatusOK, []models.Neo4jUser{})
 			return
 		}
 
@@ -564,7 +564,7 @@ func GetMutualFollowers() gin.HandlerFunc {
 					return nil, err
 				}
 
-				var users []model.Neo4jUser
+				var users []models.Neo4jUser
 				for result.NextRecord(context.Background(), nil) {
 					userNode, ok := result.Record().Get("mutualFollowers")
 					if !ok {
@@ -592,7 +592,7 @@ func GetMutualFollowers() gin.HandlerFunc {
 					if !ok {
 						private = false // or any default value
 					}
-					user := model.Neo4jUser{
+					user := models.Neo4jUser{
 						ID:        userMap["id"].(string),
 						UserName:  userMap["username"].(string),
 						Name:      name,
@@ -614,8 +614,8 @@ func GetMutualFollowers() gin.HandlerFunc {
 			return
 		}
 
-		if len(result.([]model.Neo4jUser)) == 0 {
-			c.JSON(http.StatusOK, []model.Neo4jUser{})
+		if len(result.([]models.Neo4jUser)) == 0 {
+			c.JSON(http.StatusOK, []models.Neo4jUser{})
 			return
 		}
 

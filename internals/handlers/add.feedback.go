@@ -1,13 +1,13 @@
-package controller
+package handlers
 
 import (
 	"context"
 	"log"
 	"net/http"
 	"time"
-	"userrelation/database"
-	"userrelation/helper"
-	"userrelation/model"
+	"userrelation/internals/models"
+	helper "userrelation/internals/utils"
+	"userrelation/pkg/database"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -49,7 +49,7 @@ func AddFeedback() gin.HandlerFunc {
 			return
 		}
 
-		var feedback model.Feedback
+		var feedback models.Feedback
 		if err := c.BindJSON(&feedback); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 			return
@@ -99,7 +99,7 @@ func AddFeedback() gin.HandlerFunc {
 		restaurantFilter := bson.M{"_id": restaurantIDObj}
 
 		// Fetch current rating and total_ratings
-		var restaurant model.RestaurantFeedbackUpdate
+		var restaurant models.RestaurantFeedbackUpdate
 		err = RestaurantCollection.FindOne(c, restaurantFilter).Decode(&restaurant)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching restaurant data"})
@@ -138,7 +138,7 @@ func AddFeedback() gin.HandlerFunc {
 		locationFilter := bson.M{"_id": locationIDObj}
 
 		// Fetch current rating and total_ratings for location
-		var location model.Location
+		var location models.Location
 		err = LocationCollection.FindOne(c, locationFilter).Decode(&location)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching location data"})

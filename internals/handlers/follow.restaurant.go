@@ -1,13 +1,13 @@
-package controller
+package handlers
 
 import (
 	"context"
 	"errors"
 	"log"
 	"net/http"
-	"userrelation/database"
-	"userrelation/helper"
-	"userrelation/model"
+	"userrelation/internals/models"
+	helper "userrelation/internals/utils"
+	"userrelation/pkg/database"
 
 	"github.com/gin-gonic/gin"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
@@ -143,7 +143,7 @@ func ViewFollowedRestaurant() gin.HandlerFunc {
 					return nil, err
 				}
 
-				var users []model.Restaurant
+				var users []models.Restaurant
 				for result.NextRecord(context.Background(), nil) {
 					userNode, ok := result.Record().Get("user")
 					if !ok {
@@ -163,7 +163,7 @@ func ViewFollowedRestaurant() gin.HandlerFunc {
 					if !ok {
 						description = "" // or any default value
 					}
-					user := model.Restaurant{
+					user := models.Restaurant{
 						Restaurant_ID:   userMap["id"].(string),
 						Restaurant_Name: name,
 						Description:     description,
@@ -183,8 +183,8 @@ func ViewFollowedRestaurant() gin.HandlerFunc {
 			return
 		}
 
-		if len(result.([]model.Restaurant)) == 0 {
-			c.JSON(http.StatusOK, []model.Restaurant{})
+		if len(result.([]models.Restaurant)) == 0 {
+			c.JSON(http.StatusOK, []models.Restaurant{})
 			return
 		}
 
