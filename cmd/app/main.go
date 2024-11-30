@@ -8,6 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/cors"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 func main() {
@@ -18,9 +20,10 @@ func main() {
 
 	router := gin.New()
 	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:4200"},
+		AllowedOrigins: []string{"https://restaurants.dolfins.co", "https://dolfins.co", "http://localhost:4200"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{"Origin", "Content-Type", "Authorization"},
 	})
@@ -41,5 +44,18 @@ func main() {
 
 	route.Routes(router)
 
-	log.Fatal(http.ListenAndServe(":"+port, handler))
+	// Create an HTTP/2 server
+	h2s := &http2.Server{}
+
+	// Create a standard HTTP server with h2c handler
+	server := &http.Server{
+		Addr:    ":" + port,
+		Handler: h2c.NewHandler(handler, h2s),
+	}
+
+	// Start the server
+	log.Printf("Server is running on port %s", port)
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("Could not listen on %s: %v\n", port, err)
+	}
 }
