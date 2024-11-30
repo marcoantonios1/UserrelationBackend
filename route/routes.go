@@ -7,7 +7,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// func getUserIP(c *gin.Context) string {
+// 	// Get the X-Forwarded-For header value
+// 	xff := c.GetHeader("X-Forwarded-For")
+// 	if xff != "" {
+// 		// If there are multiple IPs in the X-Forwarded-For header, use the first one
+// 		ips := strings.Split(xff, ",")
+// 		if len(ips) > 0 {
+// 			return strings.TrimSpace(ips[0])
+// 		}
+// 	}
+// 	// Fallback to the remote address
+// 	return c.ClientIP()
+// }
+
 func Routes(incomingRoutes *gin.Engine) {
+	incomingRoutes.GET("/", handlers.HealthCheck())
 	userRoutes := incomingRoutes.Group("/api/user")
 	{
 		userRoutes.Use(middleware.Authentication())
