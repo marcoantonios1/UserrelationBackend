@@ -4,14 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"os"
 
 	"github.com/segmentio/kafka-go"
 )
 
+var KafkaUrl = os.Getenv("KAFKA_URL")
+
 func KafkaFollow(ctx context.Context, followerId string, userToFollowID string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"localhost:9092"},
+		Brokers:  []string{KafkaUrl},
 		Topic:    "user_relation",
 		Balancer: &kafka.LeastBytes{},
 	})
@@ -46,7 +49,7 @@ func KafkaFollow(ctx context.Context, followerId string, userToFollowID string) 
 func KafkaUnFollow(ctx context.Context, followerId string, userToFollowID string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"localhost:9092"},
+		Brokers:  []string{KafkaUrl},
 		Topic:    "user_relation",
 		Balancer: &kafka.LeastBytes{},
 	})
@@ -81,7 +84,7 @@ func KafkaUnFollow(ctx context.Context, followerId string, userToFollowID string
 func KafkaFollowRequest(ctx context.Context, followerId string, userToFollowID string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"localhost:9092"},
+		Brokers:  []string{KafkaUrl},
 		Topic:    "user_relation",
 		Balancer: &kafka.LeastBytes{},
 	})
@@ -116,7 +119,7 @@ func KafkaFollowRequest(ctx context.Context, followerId string, userToFollowID s
 func KafkaAcceptFollowRequest(ctx context.Context, followerId string, userToFollowID string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"localhost:9092"},
+		Brokers:  []string{KafkaUrl},
 		Topic:    "user_relation",
 		Balancer: &kafka.LeastBytes{},
 	})
@@ -151,7 +154,7 @@ func KafkaAcceptFollowRequest(ctx context.Context, followerId string, userToFoll
 func KafkaDeclineFollowRequest(ctx context.Context, followerId string, userToFollowID string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"localhost:9092"},
+		Brokers:  []string{KafkaUrl},
 		Topic:    "user_relation",
 		Balancer: &kafka.LeastBytes{},
 	})
@@ -186,7 +189,7 @@ func KafkaDeclineFollowRequest(ctx context.Context, followerId string, userToFol
 func KafkaCancelFollowRequest(ctx context.Context, followerId string, userToFollowID string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"localhost:9092"},
+		Brokers:  []string{KafkaUrl},
 		Topic:    "user_relation",
 		Balancer: &kafka.LeastBytes{},
 	})
@@ -223,7 +226,7 @@ func KafkaCancelFollowRequest(ctx context.Context, followerId string, userToFoll
 func KafkaFollowRestaurant(ctx context.Context, followerId string, userToFollowID string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"localhost:9092"},
+		Brokers:  []string{KafkaUrl},
 		Topic:    "user_relation",
 		Balancer: &kafka.LeastBytes{},
 	})
@@ -258,7 +261,7 @@ func KafkaFollowRestaurant(ctx context.Context, followerId string, userToFollowI
 func KafkaUnFollowRestaurant(ctx context.Context, followerId string, userToFollowID string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"localhost:9092"},
+		Brokers:  []string{KafkaUrl},
 		Topic:    "user_relation",
 		Balancer: &kafka.LeastBytes{},
 	})
@@ -295,7 +298,7 @@ func KafkaUnFollowRestaurant(ctx context.Context, followerId string, userToFollo
 func KafkaLeaveFeedbackRestaurant(ctx context.Context, userId string, restaurantId string, locationId string, reservationId string, rating uint16, feedback string, createdAt string) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"localhost:9092"},
+		Brokers:  []string{KafkaUrl},
 		Topic:    "user_restaurant_feedback",
 		Balancer: &kafka.LeastBytes{},
 	})
