@@ -7,19 +7,22 @@ import (
 	"net/http"
 	"userrelation/internals/models"
 	helper "userrelation/internals/utils"
-	"userrelation/pkg/database"
 
 	"github.com/gin-gonic/gin"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
-
-var RestaurantCollection *mongo.Collection = database.RestaurantsData(database.Restaurants, "Restaurants")
 
 func UnFollowRestaurant() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		var prod bool
+		if environement == "prod" {
+			prod = true
+		} else {
+			prod = false
+		}
 		// Get user ID from context
 		userID, exists := c.Get("id")
 		if !exists {
@@ -40,7 +43,7 @@ func UnFollowRestaurant() gin.HandlerFunc {
 
 		// Decrement the 'following' count of the user
 		update := bson.M{"$inc": bson.M{"following_restaurants": -1}}
-		_, err = UsersCollection.UpdateOne(ctx, bson.M{"_id": userIDObj}, update)
+		_, err = UsersCollection(environement).UpdateOne(ctx, bson.M{"_id": userIDObj}, update)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
 			return
@@ -48,19 +51,26 @@ func UnFollowRestaurant() gin.HandlerFunc {
 
 		// Decrement the 'followers' count of the user being unfollowed
 		update = bson.M{"$inc": bson.M{"followers": -1}}
-		_, err = RestaurantCollection.UpdateOne(ctx, bson.M{"_id": userToUnFollowIDObj}, update)
+		_, err = RestaurantCollection(environement).UpdateOne(ctx, bson.M{"_id": userToUnFollowIDObj}, update)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user to unfollow"})
 			return
 		}
 
 		c.JSON(http.StatusOK, "FOLLOW")
-		go helper.KafkaUnFollowRestaurant(ctx, userIDObj.Hex(), userToUnFollowID)
+		go helper.KafkaUnFollowRestaurant(ctx, userIDObj.Hex(), userToUnFollowID, prod)
 	}
 }
 
 func FollowRestaurant() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		var prod bool
+		if environement == "prod" {
+			prod = true
+		} else {
+			prod = false
+		}
 		// Get user ID from context
 		userID, exists := c.Get("id")
 		if !exists {
@@ -81,7 +91,7 @@ func FollowRestaurant() gin.HandlerFunc {
 
 		// Increment the 'following' count of the user
 		update := bson.M{"$inc": bson.M{"following_restaurants": 1}}
-		_, err = UsersCollection.UpdateOne(ctx, bson.M{"_id": userIDObj}, update)
+		_, err = UsersCollection(environement).UpdateOne(ctx, bson.M{"_id": userIDObj}, update)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
 			return
@@ -89,19 +99,26 @@ func FollowRestaurant() gin.HandlerFunc {
 
 		// Increment the 'followers' count of the user being followed
 		update = bson.M{"$inc": bson.M{"followers": 1}}
-		_, err = RestaurantCollection.UpdateOne(ctx, bson.M{"_id": userToFollowIDObj}, update)
+		_, err = RestaurantCollection(environement).UpdateOne(ctx, bson.M{"_id": userToFollowIDObj}, update)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user to follow"})
 			return
 		}
 
 		c.JSON(http.StatusOK, "FOLLOWING")
-		go helper.KafkaFollowRestaurant(ctx, userIDObj.Hex(), userToFollowID)
+		go helper.KafkaFollowRestaurant(ctx, userIDObj.Hex(), userToFollowID, prod)
 	}
 }
 
 func ViewFollowedRestaurant() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		// var prod bool
+		// if environement == "prod" {
+		// 	prod = true
+		// } else {
+		// 	prod = false
+		// }
 		usersearchID := c.Query("id")
 		userID, exists := c.Get("id")
 		if !exists {
@@ -118,14 +135,14 @@ func ViewFollowedRestaurant() gin.HandlerFunc {
 			usersearchID = userIDObj.Hex()
 		}
 		// Create a new driver for Neo4j
-		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j(environement), neo4j.BasicAuth(Neo4j_User, Neo4j_Password(environement), ""))
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer driver.Close(context.Background())
 
 		// Create a new session
-		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: Neo4j_Database(environement)})
 		defer session.Close(context.Background())
 
 		// Run the query to find users with REQUESTED relationship

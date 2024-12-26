@@ -16,6 +16,13 @@ import (
 
 func ViewRestaurantFeedback() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		// var prod bool
+		// if environement == "prod" {
+		// 	prod = true
+		// } else {
+		// 	prod = false
+		// }
 		restaurantID := c.Query("restaurantId")
 		locationID := c.Query("locationId")
 		isLocation := false
@@ -28,14 +35,14 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 		}
 
 		// Create a new driver for Neo4j
-		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j(environement), neo4j.BasicAuth(Neo4j_User, Neo4j_Password(environement), ""))
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer driver.Close(context.Background())
 
 		// Create a new session
-		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: Neo4j_Database(environement)})
 		defer session.Close(context.Background())
 
 		// Run the query to get feedback with user info
@@ -127,6 +134,13 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 
 func GetStarCounts() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		// var prod bool
+		// if environement == "prod" {
+		// 	prod = true
+		// } else {
+		// 	prod = false
+		// }
 		restaurantID := c.Query("restaurantId")
 		isLocation := false
 		if restaurantID == "" {
@@ -164,7 +178,7 @@ func GetStarCounts() gin.HandlerFunc {
 		}
 
 		// Execute the aggregation
-		cursor, err := FeedbackCollection.Aggregate(context.Background(), pipeline)
+		cursor, err := FeedbackCollection(environement).Aggregate(context.Background(), pipeline)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

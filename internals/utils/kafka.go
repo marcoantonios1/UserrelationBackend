@@ -11,7 +11,7 @@ import (
 
 var KafkaUrl = os.Getenv("KAFKA_URL")
 
-func KafkaFollow(ctx context.Context, followerId string, userToFollowID string) {
+func KafkaFollow(ctx context.Context, followerId string, userToFollowID string, prod bool) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -26,6 +26,7 @@ func KafkaFollow(ctx context.Context, followerId string, userToFollowID string) 
 		"followerId": followerId,
 		"followeeId": userToFollowID,
 		"following":  true,
+		"prod":       prod,
 	}
 
 	messageJSON, err := json.Marshal(message)
@@ -46,7 +47,7 @@ func KafkaFollow(ctx context.Context, followerId string, userToFollowID string) 
 	}
 }
 
-func KafkaUnFollow(ctx context.Context, followerId string, userToFollowID string) {
+func KafkaUnFollow(ctx context.Context, followerId string, userToFollowID string, prod bool) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -61,6 +62,7 @@ func KafkaUnFollow(ctx context.Context, followerId string, userToFollowID string
 		"followerId":  followerId,
 		"followeeId":  userToFollowID,
 		"unfollowing": true,
+		"prod":       prod,
 	}
 
 	messageJSON, err := json.Marshal(message)
@@ -81,7 +83,7 @@ func KafkaUnFollow(ctx context.Context, followerId string, userToFollowID string
 	}
 }
 
-func KafkaFollowRequest(ctx context.Context, followerId string, userToFollowID string) {
+func KafkaFollowRequest(ctx context.Context, followerId string, userToFollowID string, prod bool) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -96,6 +98,7 @@ func KafkaFollowRequest(ctx context.Context, followerId string, userToFollowID s
 		"followerId":    followerId,
 		"followeeId":    userToFollowID,
 		"followRequest": true,
+		"prod":          prod,
 	}
 
 	messageJSON, err := json.Marshal(message)
@@ -116,7 +119,7 @@ func KafkaFollowRequest(ctx context.Context, followerId string, userToFollowID s
 	}
 }
 
-func KafkaAcceptFollowRequest(ctx context.Context, followerId string, userToFollowID string) {
+func KafkaAcceptFollowRequest(ctx context.Context, followerId string, userToFollowID string, prod bool) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -131,6 +134,7 @@ func KafkaAcceptFollowRequest(ctx context.Context, followerId string, userToFoll
 		"followerId": followerId,
 		"followeeId": userToFollowID,
 		"accept":     true,
+		"prod":       prod,
 	}
 
 	messageJSON, err := json.Marshal(message)
@@ -151,7 +155,7 @@ func KafkaAcceptFollowRequest(ctx context.Context, followerId string, userToFoll
 	}
 }
 
-func KafkaDeclineFollowRequest(ctx context.Context, followerId string, userToFollowID string) {
+func KafkaDeclineFollowRequest(ctx context.Context, followerId string, userToFollowID string, prod bool) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -166,6 +170,7 @@ func KafkaDeclineFollowRequest(ctx context.Context, followerId string, userToFol
 		"followerId": followerId,
 		"followeeId": userToFollowID,
 		"decline":    true,
+		"prod":       prod,
 	}
 
 	messageJSON, err := json.Marshal(message)
@@ -186,7 +191,7 @@ func KafkaDeclineFollowRequest(ctx context.Context, followerId string, userToFol
 	}
 }
 
-func KafkaCancelFollowRequest(ctx context.Context, followerId string, userToFollowID string) {
+func KafkaCancelFollowRequest(ctx context.Context, followerId string, userToFollowID string, prod bool) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -201,6 +206,7 @@ func KafkaCancelFollowRequest(ctx context.Context, followerId string, userToFoll
 		"followerId":          followerId,
 		"followeeId":          userToFollowID,
 		"deleteFollowRequest": true,
+		"prod":                prod,
 	}
 
 	messageJSON, err := json.Marshal(message)
@@ -223,7 +229,7 @@ func KafkaCancelFollowRequest(ctx context.Context, followerId string, userToFoll
 
 ///////////////RESTAURANTS////////////////////
 
-func KafkaFollowRestaurant(ctx context.Context, followerId string, userToFollowID string) {
+func KafkaFollowRestaurant(ctx context.Context, followerId string, userToFollowID string, prod bool) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -238,6 +244,7 @@ func KafkaFollowRestaurant(ctx context.Context, followerId string, userToFollowI
 		"followerId":          followerId,
 		"followeeId":          userToFollowID,
 		"followingRestaurant": true,
+		"prod":                prod,
 	}
 
 	messageJSON, err := json.Marshal(message)
@@ -258,7 +265,7 @@ func KafkaFollowRestaurant(ctx context.Context, followerId string, userToFollowI
 	}
 }
 
-func KafkaUnFollowRestaurant(ctx context.Context, followerId string, userToFollowID string) {
+func KafkaUnFollowRestaurant(ctx context.Context, followerId string, userToFollowID string, prod bool) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -273,6 +280,7 @@ func KafkaUnFollowRestaurant(ctx context.Context, followerId string, userToFollo
 		"followerId":            followerId,
 		"followeeId":            userToFollowID,
 		"unfollowingRestaurant": true,
+		"prod":                  prod,
 	}
 
 	messageJSON, err := json.Marshal(message)
@@ -295,7 +303,7 @@ func KafkaUnFollowRestaurant(ctx context.Context, followerId string, userToFollo
 
 ///////////////FEEDBACK////////////////////
 
-func KafkaLeaveFeedbackRestaurant(ctx context.Context, userId string, restaurantId string, locationId string, reservationId string, rating uint16, feedback string, createdAt string) {
+func KafkaLeaveFeedbackRestaurant(ctx context.Context, userId string, restaurantId string, locationId string, reservationId string, rating uint16, feedback string, createdAt string, prod bool) {
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -314,6 +322,7 @@ func KafkaLeaveFeedbackRestaurant(ctx context.Context, userId string, restaurant
 		"rating":        rating,
 		"feedback":      feedback,
 		"createdAt":     createdAt,
+		"prod":          prod,
 	}
 
 	messageJSON, err := json.Marshal(message)
