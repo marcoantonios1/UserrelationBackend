@@ -9,9 +9,8 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-var KafkaUrl = os.Getenv("KAFKA_URL_CONNECTION")
-
 func KafkaFollow(ctx context.Context, followerId string, userToFollowID string, prod bool) {
+	KafkaUrl := os.Getenv("KAFKA_URL")
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -48,6 +47,7 @@ func KafkaFollow(ctx context.Context, followerId string, userToFollowID string, 
 }
 
 func KafkaUnFollow(ctx context.Context, followerId string, userToFollowID string, prod bool) {
+	KafkaUrl := os.Getenv("KAFKA_URL")
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -84,6 +84,7 @@ func KafkaUnFollow(ctx context.Context, followerId string, userToFollowID string
 }
 
 func KafkaFollowRequest(ctx context.Context, followerId string, userToFollowID string, prod bool) {
+	KafkaUrl := os.Getenv("KAFKA_URL")
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -120,6 +121,7 @@ func KafkaFollowRequest(ctx context.Context, followerId string, userToFollowID s
 }
 
 func KafkaAcceptFollowRequest(ctx context.Context, followerId string, userToFollowID string, prod bool) {
+	KafkaUrl := os.Getenv("KAFKA_URL")
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -156,6 +158,7 @@ func KafkaAcceptFollowRequest(ctx context.Context, followerId string, userToFoll
 }
 
 func KafkaDeclineFollowRequest(ctx context.Context, followerId string, userToFollowID string, prod bool) {
+	KafkaUrl := os.Getenv("KAFKA_URL")
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -192,6 +195,7 @@ func KafkaDeclineFollowRequest(ctx context.Context, followerId string, userToFol
 }
 
 func KafkaCancelFollowRequest(ctx context.Context, followerId string, userToFollowID string, prod bool) {
+	KafkaUrl := os.Getenv("KAFKA_URL")
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -230,7 +234,7 @@ func KafkaCancelFollowRequest(ctx context.Context, followerId string, userToFoll
 ///////////////RESTAURANTS////////////////////
 
 func KafkaFollowRestaurant(ctx context.Context, followerId string, userToFollowID string, prod bool) {
-	log.Println("KafkaUrl", KafkaUrl)
+	KafkaUrl := os.Getenv("KAFKA_URL")
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -267,6 +271,7 @@ func KafkaFollowRestaurant(ctx context.Context, followerId string, userToFollowI
 }
 
 func KafkaUnFollowRestaurant(ctx context.Context, followerId string, userToFollowID string, prod bool) {
+	KafkaUrl := os.Getenv("KAFKA_URL")
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -305,6 +310,7 @@ func KafkaUnFollowRestaurant(ctx context.Context, followerId string, userToFollo
 ///////////////FEEDBACK////////////////////
 
 func KafkaLeaveFeedbackRestaurant(ctx context.Context, userId string, restaurantId string, locationId string, reservationId string, rating uint16, feedback string, createdAt string, prod bool) {
+	KafkaUrl := os.Getenv("KAFKA_URL")
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
