@@ -9,7 +9,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-var KafkaUrl = os.Getenv("KAFKA_URL")
+var KafkaUrl = os.Getenv("KAFKA_URL_CONNECTION")
 
 func KafkaFollow(ctx context.Context, followerId string, userToFollowID string, prod bool) {
 	// Kafka configuration
@@ -62,7 +62,7 @@ func KafkaUnFollow(ctx context.Context, followerId string, userToFollowID string
 		"followerId":  followerId,
 		"followeeId":  userToFollowID,
 		"unfollowing": true,
-		"prod":       prod,
+		"prod":        prod,
 	}
 
 	messageJSON, err := json.Marshal(message)
