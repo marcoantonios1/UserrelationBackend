@@ -7,12 +7,17 @@ import (
 	"userrelation/route"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
 
 func main() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Println("⚠️ Warning: No .env file found or could not be loaded")
+	}
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
