@@ -12,7 +12,6 @@ import (
 var KafkaUrl string = os.Getenv("KAFKA_URL")
 
 func KafkaFollow(ctx context.Context, followerId string, userToFollowID string, prod bool) {
-	log.Print("KafkaUrl: ", KafkaUrl)
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
@@ -231,6 +230,7 @@ func KafkaCancelFollowRequest(ctx context.Context, followerId string, userToFoll
 ///////////////RESTAURANTS////////////////////
 
 func KafkaFollowRestaurant(ctx context.Context, followerId string, userToFollowID string, prod bool) {
+	log.Print("KafkaUrl: ", KafkaUrl)
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
