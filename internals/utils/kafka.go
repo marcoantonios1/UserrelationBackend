@@ -230,6 +230,7 @@ func KafkaCancelFollowRequest(ctx context.Context, followerId string, userToFoll
 ///////////////RESTAURANTS////////////////////
 
 func KafkaFollowRestaurant(ctx context.Context, followerId string, userToFollowID string, prod bool) {
+	log.Println("KafkaUrl", KafkaUrl)
 	// Kafka configuration
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{KafkaUrl},
