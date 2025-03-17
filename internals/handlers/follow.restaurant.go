@@ -59,6 +59,7 @@ func UnFollowRestaurant() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, "FOLLOW")
 		go helper.KafkaUnFollowRestaurant(ctx, userIDObj.Hex(), userToUnFollowID, prod)
+		go helper.KafkaRestaurantFollowLog(ctx, userIDObj.Hex(), userToUnFollowID, "unfollowed",prod)
 	}
 }
 
@@ -107,6 +108,7 @@ func FollowRestaurant() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, "FOLLOWING")
 		go helper.KafkaFollowRestaurant(ctx, userIDObj.Hex(), userToFollowID, prod)
+		go helper.KafkaRestaurantFollowLog(ctx, userIDObj.Hex(), userToFollowID, "followed",prod)
 	}
 }
 

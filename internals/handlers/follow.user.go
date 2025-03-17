@@ -98,6 +98,7 @@ func Follow() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, "FOLLOWING")
 		go helper.KafkaFollow(ctx, userIDObj.Hex(), userToFollowID, prod)
+		go helper.KafkaFollowLog(ctx, userIDObj.Hex(), userToFollowID, "followed", prod)
 	}
 }
 
@@ -150,6 +151,7 @@ func UnFollow() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, "FOLLOW")
 		go helper.KafkaUnFollow(ctx, userIDObj.Hex(), userToUnFollowID, prod)
+		go helper.KafkaFollowLog(ctx, userIDObj.Hex(), userToUnFollowID, "unfollowed", prod)
 	}
 }
 
@@ -199,6 +201,7 @@ func FollowRequest() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, "REQUESTED")
 		go helper.KafkaFollowRequest(ctx, userIDObj.Hex(), userToFollowID, prod)
+		go helper.KafkaFollowLog(ctx, userIDObj.Hex(), userToFollowID, "requested", prod)
 	}
 }
 
@@ -259,6 +262,7 @@ func AcceptRequest() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, "FOLLOWING")
 		go helper.KafkaAcceptFollowRequest(ctx, userToFollowID, userIDObj.Hex(), prod)
+		go helper.KafkaFollowLog(ctx, userIDObj.Hex(), userToFollowID, "accepted", prod)
 	}
 }
 
@@ -304,6 +308,7 @@ func DeclineRequest() gin.HandlerFunc {
 		c.JSON(http.StatusOK, "FOLLOW")
 
 		go helper.KafkaDeclineFollowRequest(ctx, userToFollowID, userIDObj.Hex(), prod)
+		go helper.KafkaFollowLog(ctx, userIDObj.Hex(), userToFollowID, "declined", prod)
 	}
 }
 
@@ -349,5 +354,6 @@ func CancelRequest() gin.HandlerFunc {
 		c.JSON(http.StatusOK, "FOLLOW")
 
 		go helper.KafkaCancelFollowRequest(ctx, userIDObj.Hex(), userToFollowID, prod)
+		go helper.KafkaFollowLog(ctx, userIDObj.Hex(), userToFollowID, "cancelled", prod)
 	}
 }
