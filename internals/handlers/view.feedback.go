@@ -23,6 +23,7 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 		// } else {
 		// 	prod = false
 		// }
+
 		restaurantID := c.Query("restaurantId")
 		locationID := c.Query("locationId")
 		isLocation := false
@@ -36,6 +37,7 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 
 		// Create a new driver for Neo4j
 		driver, err := neo4j.NewDriverWithContext(Neo4j(environement), neo4j.BasicAuth(Neo4j_User, Neo4j_Password(environement), ""))
+
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -56,6 +58,7 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
                         RETURN u { .id, .username, .image } AS user, 
                                r { .feedback, .rating, .createdAt, .response, .responseCreatedAt, .responderFullName, review_id: id(r) } AS review
                     `,
+
 						map[string]interface{}{
 							"restaurantId": restaurantID,
 							"locationId":   locationID,
@@ -67,6 +70,7 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
                         RETURN u { .id, .username, .image } AS user, 
                                r { .feedback, .rating, .createdAt, .response, .responseCreatedAt, .responderFullName, review_id: id(r) } AS review
                     `,
+
 						map[string]interface{}{
 							"restaurantId": restaurantID,
 						},
@@ -95,6 +99,7 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 					userID, _ := userMap["id"].(string)
 
 					// Map review details including the response fields
+
 					reviewMap := reviewNode.(map[string]interface{})
 					feedback, _ := reviewMap["feedback"].(string)
 					rating64, _ := reviewMap["rating"].(int64)
@@ -118,6 +123,7 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 						Response:   response,
 						ResponseAt: responseCreatedAt,
 						ResponseBy: responderFullName,
+
 					})
 				}
 
@@ -150,6 +156,7 @@ func GetStarCounts() gin.HandlerFunc {
 		// } else {
 		// 	prod = false
 		// }
+
 		restaurantID := c.Query("restaurantId")
 		isLocation := false
 		if restaurantID == "" {
@@ -188,6 +195,7 @@ func GetStarCounts() gin.HandlerFunc {
 
 		// Execute the aggregation
 		cursor, err := FeedbackCollection(environement).Aggregate(context.Background(), pipeline)
+
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

@@ -23,6 +23,7 @@ func AddFeedback() gin.HandlerFunc {
 		} else {
 			prod = false
 		}
+    
 		restaurantID := c.Query("restaurant_id")
 		locationID := c.Query("location_id")
 		reservationID := c.Query("reservation_id")

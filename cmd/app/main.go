@@ -1,6 +1,7 @@
 package main
 
 import (
+
 	"fmt"
 	"log"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"userrelation/route"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 	"golang.org/x/net/http2"
@@ -20,6 +22,7 @@ func main() {
 	}
 	kafkaURL := os.Getenv("KAFKA_URL")
 	fmt.Println("Kafka URL from .env:", kafkaURL)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
