@@ -29,11 +29,11 @@ func DBSetOrders() *mongo.Client {
 
 	err = client.Ping(ctx, nil)
 	if err != nil {
-		log.Println("failed to connect to mongodb")
+		log.Println("failed to connect to mongodb orders")
 		return nil
 	}
 
-	fmt.Println("Successfully connected to mongodb")
+	fmt.Println("Successfully connected to mongodb orders")
 
 	return client
 }

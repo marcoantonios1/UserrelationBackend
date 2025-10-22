@@ -29,11 +29,11 @@ func DBSetRestaurants() *mongo.Client {
 
 	err = client.Ping(ctx, nil)
 	if err != nil {
-		log.Println("failed to connect to mongodb")
+		log.Println("failed to connect to mongodb restaurants")
 		return nil
 	}
 
-	fmt.Println("Successfully connected to mongodb")
+	fmt.Println("Successfully connected to mongodb restaurants")
 
 	return client
 }

@@ -11,6 +11,16 @@ import (
 
 func Authentication() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		var env string
+		if strings.HasPrefix(c.Request.URL.Path, "/dev/api") {
+			env = "dev"
+		} else if strings.HasPrefix(c.Request.URL.Path, "/prod/api") {
+			env = "prod"
+		} else {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Invalid API Endpoint"})
+			return
+		}
+		c.Set("env", env)
 		authHeader := c.Request.Header.Get("Authorization")
 		splitToken := strings.Split(authHeader, "Bearer ")
 		if len(splitToken) != 2 {

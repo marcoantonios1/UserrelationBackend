@@ -63,12 +63,16 @@ type Feedback struct {
 }
 
 type RestaurantFeedback struct {
-	UserID    string `json:"user_id"`
-	Username  string `json:"username"`
-	Image     string `json:"image"`
-	Feedback  string `json:"feedback"`
-	Rating    int    `json:"rating"`
-	CreatedAt string `json:"created_at"`
+	ReviewID   int64  `json:"review_id"`
+	UserID     string `json:"user_id"`
+	Username   string `json:"username"`
+	Image      string `json:"image"`
+	Feedback   string `json:"feedback"`
+	Rating     int    `json:"rating"`
+	CreatedAt  string `json:"created_at"`
+	Response   string `json:"response"`
+	ResponseAt string `json:"response_at"`
+	ResponseBy string `json:"response_by"`
 }
 
 type TotalCountPreStar struct {

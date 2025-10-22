@@ -16,6 +16,14 @@ import (
 
 func ViewRestaurantFeedback() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		// var prod bool
+		// if environement == "prod" {
+		// 	prod = true
+		// } else {
+		// 	prod = false
+		// }
+
 		restaurantID := c.Query("restaurantId")
 		locationID := c.Query("locationId")
 		isLocation := false
@@ -28,14 +36,15 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 		}
 
 		// Create a new driver for Neo4j
-		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j(environement), neo4j.BasicAuth(Neo4j_User, Neo4j_Password(environement), ""))
+
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer driver.Close(context.Background())
 
 		// Create a new session
-		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: Neo4j_Database(environement)})
 		defer session.Close(context.Background())
 
 		// Run the query to get feedback with user info
@@ -44,11 +53,12 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 				var result neo4j.ResultWithContext
 				if isLocation {
 					result, err = tx.Run(context.Background(), `
-                    MATCH (u:User)-[r:REVIEWED]->(restaurant:Restaurant {id: $restaurantId})
-                    WHERE r.locationId = $locationId
-                    RETURN u { .id, .username, .image } AS user, 
-                           r { .feedback, .rating, .createdAt } AS review
-                `,
+                        MATCH (u:User)-[r:REVIEWED]->(restaurant:Restaurant {id: $restaurantId})
+                        WHERE r.locationId = $locationId
+                        RETURN u { .id, .username, .image } AS user, 
+                               r { .feedback, .rating, .createdAt, .response, .responseCreatedAt, .responderFullName, review_id: id(r) } AS review
+                    `,
+
 						map[string]interface{}{
 							"restaurantId": restaurantID,
 							"locationId":   locationID,
@@ -56,10 +66,11 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 					)
 				} else {
 					result, err = tx.Run(context.Background(), `
-                    MATCH (u:User)-[r:REVIEWED]->(restaurant:Restaurant {id: $restaurantId})
-                    RETURN u { .id, .username, .image } AS user, 
-                           r { .feedback, .rating, .createdAt } AS review
-                `,
+                        MATCH (u:User)-[r:REVIEWED]->(restaurant:Restaurant {id: $restaurantId})
+                        RETURN u { .id, .username, .image } AS user, 
+                               r { .feedback, .rating, .createdAt, .response, .responseCreatedAt, .responderFullName, review_id: id(r) } AS review
+                    `,
+
 						map[string]interface{}{
 							"restaurantId": restaurantID,
 						},
@@ -87,21 +98,32 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 					username, _ := userMap["username"].(string)
 					userID, _ := userMap["id"].(string)
 
-					// Map review details
+					// Map review details including the response fields
+
 					reviewMap := reviewNode.(map[string]interface{})
 					feedback, _ := reviewMap["feedback"].(string)
 					rating64, _ := reviewMap["rating"].(int64)
 					rating := int(rating64)
 					createdAt, _ := reviewMap["createdAt"].(string)
+					reviewID, _ := reviewMap["review_id"].(int64)
 
-					// Create a new feedback item
+					response, _ := reviewMap["response"].(string)
+					responseCreatedAt, _ := reviewMap["responseCreatedAt"].(string)
+					responderFullName, _ := reviewMap["responderFullName"].(string)
+
+					// Create a new feedback item with response details included
 					feedbacks = append(feedbacks, models.RestaurantFeedback{
-						UserID:    userID,
-						Username:  username,
-						Image:     image,
-						Feedback:  feedback,
-						Rating:    rating,
-						CreatedAt: createdAt,
+						UserID:     userID,
+						Username:   username,
+						Image:      image,
+						Feedback:   feedback,
+						Rating:     rating,
+						ReviewID:   reviewID,
+						CreatedAt:  createdAt,
+						Response:   response,
+						ResponseAt: responseCreatedAt,
+						ResponseBy: responderFullName,
+
 					})
 				}
 
@@ -127,6 +149,14 @@ func ViewRestaurantFeedback() gin.HandlerFunc {
 
 func GetStarCounts() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		// var prod bool
+		// if environement == "prod" {
+		// 	prod = true
+		// } else {
+		// 	prod = false
+		// }
+
 		restaurantID := c.Query("restaurantId")
 		isLocation := false
 		if restaurantID == "" {
@@ -164,7 +194,8 @@ func GetStarCounts() gin.HandlerFunc {
 		}
 
 		// Execute the aggregation
-		cursor, err := FeedbackCollection.Aggregate(context.Background(), pipeline)
+		cursor, err := FeedbackCollection(environement).Aggregate(context.Background(), pipeline)
+
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

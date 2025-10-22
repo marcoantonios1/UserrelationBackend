@@ -7,7 +7,6 @@ import (
 	"time"
 	"userrelation/internals/models"
 	helper "userrelation/internals/utils"
-	"userrelation/pkg/database"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -15,11 +14,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var FeedbackCollection *mongo.Collection = database.OrdersData(database.Orders, "Feedbacks")
-var LocationCollection *mongo.Collection = database.RestaurantsData(database.Restaurants, "Location")
-
 func AddFeedback() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		var prod bool
+		if environement == "prod" {
+			prod = true
+		} else {
+			prod = false
+		}
+    
 		restaurantID := c.Query("restaurant_id")
 		locationID := c.Query("location_id")
 		reservationID := c.Query("reservation_id")
@@ -78,16 +82,16 @@ func AddFeedback() gin.HandlerFunc {
 		feedback.Created_At = time.Now()
 
 		if feedback.Feedback == "" {
-			_, err = FeedbackCollection.InsertOne(c, feedback)
+			_, err = FeedbackCollection(environement).InsertOne(c, feedback)
 			if err != nil {
 				log.Print(err)
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save feedback"})
 				return
 			}
 		} else {
-			go helper.KafkaLeaveFeedbackRestaurant(context.Background(), feedback.User_ID.Hex(), feedback.Restaurant_ID.Hex(), feedback.Location_ID.Hex(), feedback.Reservation_ID.Hex(), feedback.Rating, feedback.Feedback, feedback.Created_At.String())
+			go helper.KafkaLeaveFeedbackRestaurant(context.Background(), feedback.User_ID.Hex(), feedback.Restaurant_ID.Hex(), feedback.Location_ID.Hex(), feedback.Reservation_ID.Hex(), feedback.Rating, feedback.Feedback, feedback.Created_At.String(), prod)
 			feedback.Feedback = ""
-			_, err = FeedbackCollection.InsertOne(c, feedback)
+			_, err = FeedbackCollection(environement).InsertOne(c, feedback)
 			if err != nil {
 				log.Print(err)
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save feedback"})
@@ -100,7 +104,7 @@ func AddFeedback() gin.HandlerFunc {
 
 		// Fetch current rating and total_ratings
 		var restaurant models.RestaurantFeedbackUpdate
-		err = RestaurantCollection.FindOne(c, restaurantFilter).Decode(&restaurant)
+		err = RestaurantCollection(environement).FindOne(c, restaurantFilter).Decode(&restaurant)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching restaurant data"})
 			return
@@ -128,7 +132,7 @@ func AddFeedback() gin.HandlerFunc {
 		}
 
 		// Update restaurant document
-		_, err = RestaurantCollection.UpdateOne(c, restaurantFilter, restaurantUpdate)
+		_, err = RestaurantCollection(environement).UpdateOne(c, restaurantFilter, restaurantUpdate)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating restaurant rating"})
 			return
@@ -139,7 +143,7 @@ func AddFeedback() gin.HandlerFunc {
 
 		// Fetch current rating and total_ratings for location
 		var location models.Location
-		err = LocationCollection.FindOne(c, locationFilter).Decode(&location)
+		err = LocationCollection(environement).FindOne(c, locationFilter).Decode(&location)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching location data"})
 			return
@@ -167,7 +171,7 @@ func AddFeedback() gin.HandlerFunc {
 		}
 
 		// Update location document
-		_, err = LocationCollection.UpdateOne(c, locationFilter, locationUpdate)
+		_, err = LocationCollection(environement).UpdateOne(c, locationFilter, locationUpdate)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating location rating"})
 			return
@@ -182,6 +186,13 @@ func AddFeedback() gin.HandlerFunc {
 
 func CheckIfFeedback() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		// var prod bool
+		// if environement == "prod" {
+		// 	prod = true
+		// } else {
+		// 	prod = false
+		// }
 		reservationID := c.Query("reservation_id")
 		reservationIDObj, err := primitive.ObjectIDFromHex(reservationID)
 		if err != nil {
@@ -190,7 +201,7 @@ func CheckIfFeedback() gin.HandlerFunc {
 		}
 
 		filter := bson.M{"reservation_id": reservationIDObj}
-		err = FeedbackCollection.FindOne(c, filter).Err() // Just checking for the error without decoding
+		err = FeedbackCollection(environement).FindOne(c, filter).Err() // Just checking for the error without decoding
 
 		if err != nil {
 			if err == mongo.ErrNoDocuments {

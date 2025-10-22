@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"os"
 	"userrelation/internals/models"
 
 	"github.com/gin-gonic/gin"
@@ -14,12 +13,15 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-var Neo4j = os.Getenv("NEO4J_URL_USER")
-var Neo4j_User = os.Getenv("NEO4J_USER")
-var Neo4j_Password = os.Getenv("NEO4J_PASSWORD")
-
 func CheckUsersRelationship() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		// var prod bool
+		// if environement == "prod" {
+		// 	prod = true
+		// } else {
+		// 	prod = false
+		// }
 		userID, _ := c.Get("id")
 		userToFollowID := c.Query("user_id")
 
@@ -27,14 +29,16 @@ func CheckUsersRelationship() gin.HandlerFunc {
 		userIDObj := userID.(primitive.ObjectID)
 
 		// Create a new driver for Neo4j
-		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j(environement), neo4j.BasicAuth(Neo4j_User, Neo4j_Password(environement), ""))
+
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer driver.Close(context.Background())
 
 		// Create a new session
-		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: Neo4j_Database(environement)})
+
 		defer session.Close(context.Background())
 
 		// Run the query to check for relationship
@@ -90,6 +94,14 @@ func CheckUsersRelationship() gin.HandlerFunc {
 
 func CheckSearchedUsersRelationship() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		// var prod bool
+		// if environement == "prod" {
+		// 	prod = true
+		// } else {
+		// 	prod = false
+		// }
+
 		userID, _ := c.Get("id")
 		userToFollowID := c.Query("user_id")
 
@@ -97,14 +109,16 @@ func CheckSearchedUsersRelationship() gin.HandlerFunc {
 		userIDObj := userID.(primitive.ObjectID)
 
 		// Create a new driver for Neo4j
-		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j(environement), neo4j.BasicAuth(Neo4j_User, Neo4j_Password(environement), ""))
+
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer driver.Close(context.Background())
 
 		// Create a new session
-		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: Neo4j_Database(environement)})
+
 		defer session.Close(context.Background())
 
 		// Run the query to check for relationship
@@ -160,20 +174,29 @@ func CheckSearchedUsersRelationship() gin.HandlerFunc {
 
 func CheckRestaurantRelationship() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		// var prod bool
+		// if environement == "prod" {
+		// 	prod = true
+		// } else {
+		// 	prod = false
+		// }
+
 		userID, _ := c.Get("id")
 		restaurantToFollowID := c.Query("resto_id")
 
 		userIdObj := userID.(primitive.ObjectID)
 
 		// Create a new driver for Neo4j
-		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j(environement), neo4j.BasicAuth(Neo4j_User, Neo4j_Password(environement), ""))
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer driver.Close(context.Background())
 
 		// Create a new session
-		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: Neo4j_Database(environement)})
+
 		defer session.Close(context.Background())
 
 		// Run the query to check if the user has a FOLLOWING relationship with the restaurant
@@ -233,6 +256,14 @@ func CheckRestaurantRelationship() gin.HandlerFunc {
 
 func RequestFollow() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		// var prod bool
+		// if environement == "prod" {
+		// 	prod = true
+		// } else {
+		// 	prod = false
+		// }
+
 		userID, exists := c.Get("id")
 		if !exists {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "User ID not found in context"})
@@ -245,14 +276,16 @@ func RequestFollow() gin.HandlerFunc {
 			return
 		}
 		// Create a new driver for Neo4j
-		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j(environement), neo4j.BasicAuth(Neo4j_User, Neo4j_Password(environement), ""))
+
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer driver.Close(context.Background())
 
 		// Create a new session
-		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: Neo4j_Database(environement)})
+
 		defer session.Close(context.Background())
 
 		// Run the query to find users with REQUESTED relationship
@@ -328,6 +361,14 @@ func RequestFollow() gin.HandlerFunc {
 
 func ViewFollowing() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		// var prod bool
+		// if environement == "prod" {
+		// 	prod = true
+		// } else {
+		// 	prod = false
+		// }
+
 		usersearchID := c.Query("id")
 		userID, exists := c.Get("id")
 		if !exists {
@@ -344,14 +385,16 @@ func ViewFollowing() gin.HandlerFunc {
 			usersearchID = userIDObj.Hex()
 		}
 		// Create a new driver for Neo4j
-		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j(environement), neo4j.BasicAuth(Neo4j_User, Neo4j_Password(environement), ""))
+
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer driver.Close(context.Background())
 
 		// Create a new session
-		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: Neo4j_Database(environement)})
+
 		defer session.Close(context.Background())
 
 		// Run the query to find users with REQUESTED relationship
@@ -427,6 +470,14 @@ func ViewFollowing() gin.HandlerFunc {
 
 func ViewFollowers() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		// var prod bool
+		// if environement == "prod" {
+		// 	prod = true
+		// } else {
+		// 	prod = false
+		// }
+
 		usersearchID := c.Query("id")
 		userID, exists := c.Get("id")
 		if !exists {
@@ -443,14 +494,16 @@ func ViewFollowers() gin.HandlerFunc {
 			usersearchID = userIDObj.Hex()
 		}
 		// Create a new driver for Neo4j
-		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j(environement), neo4j.BasicAuth(Neo4j_User, Neo4j_Password(environement), ""))
+
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer driver.Close(context.Background())
 
 		// Create a new session
-		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: Neo4j_Database(environement)})
+
 		defer session.Close(context.Background())
 
 		// Run the query to find users with REQUESTED relationship
@@ -526,6 +579,14 @@ func ViewFollowers() gin.HandlerFunc {
 
 func GetMutualFollowers() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		// var prod bool
+		// if environement == "prod" {
+		// 	prod = true
+		// } else {
+		// 	prod = false
+		// }
+
 		usersearchID := c.Query("id")
 		userID, exists := c.Get("id")
 		if !exists {
@@ -539,14 +600,14 @@ func GetMutualFollowers() gin.HandlerFunc {
 			return
 		}
 
-		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j(environement), neo4j.BasicAuth(Neo4j_User, Neo4j_Password(environement), ""))
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer driver.Close(context.Background())
 
 		// Create a new session
-		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: Neo4j_Password(environement)})
 		defer session.Close(context.Background())
 
 		result, err := session.ExecuteRead(context.Background(),
@@ -626,6 +687,14 @@ func GetMutualFollowers() gin.HandlerFunc {
 
 func GetMutualFollowersCount() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		environement := c.GetString("env")
+		// var prod bool
+		// if environement == "prod" {
+		// 	prod = true
+		// } else {
+		// 	prod = false
+		// }
+
 		usersearchID := c.Query("id")
 		userID, exists := c.Get("id")
 		if !exists {
@@ -639,7 +708,7 @@ func GetMutualFollowersCount() gin.HandlerFunc {
 			return
 		}
 
-		driver, err := neo4j.NewDriverWithContext(Neo4j, neo4j.BasicAuth(Neo4j_User, Neo4j_Password, ""))
+		driver, err := neo4j.NewDriverWithContext(Neo4j(environement), neo4j.BasicAuth(Neo4j_User, Neo4j_Password(environement), ""))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -650,7 +719,7 @@ func GetMutualFollowersCount() gin.HandlerFunc {
 		}()
 
 		// Create a new session
-		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: "usersRelations"})
+		session := driver.NewSession(context.Background(), neo4j.SessionConfig{DatabaseName: Neo4j_Database(environement)})
 		defer func() {
 			if err := session.Close(context.Background()); err != nil {
 				log.Printf("Error closing session: %v", err)
